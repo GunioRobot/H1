@@ -1,5 +1,0 @@
-#!/bin/bash
-CP=lib:lib/@@H1-JAR@@:@@CLASSPATH@@
-#LAUNCH_COMMAND="java -javaagent:./lib/jmxetric-patch-0.1-patch-4.jar=host=239.2.11.71,port=8649,config=jmxetric.xml,process=Node -classpath $CP -Xms512m -Xmx1024m -Dfile-encoding=UTF-8 -Djavax.net.ssl.keyStore=./security/.majat-jmx-server-keystore -Djavax.net.ssl.keyStorePassword=bl1ng441S -Djavax.net.ssl.trustStore=./security/.majat-jmx-server-keystore -Djavax.net.ssl.trustStorePassword=bl1ng441S com.talis.platform.network.Node -p $PORT"
-LAUNCH_COMMAND="echo 'java -javaagent:./lib/jmxetric-patch-0.1-patch-4.jar=host=239.2.11.71,port=8649,config=jmxetric.xml,process=Node -classpath $CP -Xms512m -Xmx1024m -Dfile-encoding=UTF-8 -Djavax.net.ssl.keyStore=./security/.majat-jmx-server-keystore -Djavax.net.ssl.keyStorePassword=bl1ng441S -Djavax.net.ssl.trustStore=./security/.majat-jmx-server-keystore -Djavax.net.ssl.trustStorePassword=bl1ng441S com.talis.platform.network.Node -p $PORT'"
-
