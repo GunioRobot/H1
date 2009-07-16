@@ -1,0 +1,16 @@
+﻿<ivysettings>
+  <settings defaultResolver="chain-resolver"/>
+  <resolvers>
+    <chain name="chain-resolver">
+      <filesystem name="local">
+        <artifact pattern="${ivy.settings.dir}/repository/[artifact]-[revision].[ext]" />
+      </filesystem>
+      <ibiblio name="proxied-maven-repo" m2compatible="true" root="http://locke.talis.local/nexus/content/repositories/central/"/>
+      <ibiblio name="3rd-party-maven-repo" m2compatible="true" root="http://locke.talis.local/nexus/content/repositories/thirdparty/"/>
+      <ibiblio name="restlet-maven-repo" m2compatible="true" root="http://locke.talis.local/nexus/content/repositories/restlet/"/>
+      <ibiblio name="openrdf-maven-repo" m2compatible="true" root="http://locke.talis.local/nexus/content/repositories/openrdf/"/>
+      <ibiblio name="jena-dev-repo" m2compatible="true" root="http://locke.talis.local/nexus/content/repositories/jena-dev/"/>
+      <ibiblio name="talis-dev-repo" m2compatible="true" root="http://locke.talis.local/nexus/content/repositories/talis-dev/"/>
+    </chain>
+  </resolvers>
+</ivysettings>

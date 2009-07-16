@@ -1,0 +1,259 @@
+ <html>
+<head>
+    <script src="201a.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var cells_per_row = 10;
+        var nodes = [@DNS_NAMES@];
+        var http_port = [@HTTP_PORT@];
+        var gossip_port = [@GOSSIP_PORT@];
+
+        var node_matrix = Array();
+        var gossip_matrix = Array();
+        var timers = Array();
+        var current_row = 0;
+        var current_node = 0;
+        
+        node_matrix[current_row] = Array();
+        gossip_matrix[current_row] = Array();
+        for (var i = 0; i < nodes.length; i++){
+            if (current_node >= cells_per_row){
+              current_row++;
+              node_matrix[current_row] = Array();
+              gossip_matrix[current_row] = Array();
+              current_node=0;
+              node_matrix[current_row][current_node] = nodes[i]+':'+http_port[i];
+              gossip_matrix[current_row][current_node] = nodes[i]+':'+gossip_port[i];
+            }
+            node_matrix[current_row][current_node] = nodes[i]+':'+http_port[i];
+            gossip_matrix[current_row][current_node] = nodes[i]+':'+gossip_port[i];
+            var updateFunction = makeTimerFunction(current_row, current_node, nodes[i]+':'+http_port[i], nodes[i]+':'+gossip_port[i]);
+            timers[i] = setInterval(updateFunction, 5000);
+            current_node++;
+        }       
+
+        var selected = gossip_matrix[0][0];
+        
+        function makeTimerFunction(i, j, uri, gossip_uri){
+            return function(){
+                getStatus(i, j, uri, gossip_uri);
+            };
+        }
+        
+        function updateStatus(row, column, colour,numNeighbours, gossip_uri){
+            var mytable = document.getElementsByTagName("table")[0];
+            var myrow = mytable.getElementsByTagName("tr")[row];
+            var mycell = myrow.getElementsByTagName("td")[column];
+            mycell.bgColor = colour;
+            mycell.width = 90;
+            mycell.height = 90;            
+            js = "showNodeDetails("
+            js += '"' + node_matrix[row][column] + '", "' + gossip_uri + '"';                    
+            js += ');'
+            mycurrent_cell.setAttribute("onClick", js);
+            mycell.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            mycell.innerHTML = numNeighbours;
+        }
+
+        function updateAllCells(){
+            for (var i = 0; i < node_matrix.length; i++){
+                for (var j = 0; j < node_matrix[i].length; j++){
+                    getStatus(i, j, node_matrix[i,j]);
+                }
+            }
+        }
+
+        function makeUpdateStatus(row, column, uri, numNeighbours){
+            return function() { 
+                updateStatus(row, column, colour, numNeighbours);
+            };
+        }
+
+        function makeUpdateDetails(uri, server_status){
+            return function() { 
+                updateDetails(node_uri, server_status);
+            };
+        }      
+
+        function getStatus(row, column, uri, gossip_uri){
+            node_uri = "http://" + uri + "/status";
+            var proxy_uri = 'http://@HOST_NAME@/monitor-app/proxy.php?target=' + encodeURIComponent(node_uri);
+            var xmlhttp = null;
+            if (window.XMLHttpRequest) {
+                xmlhttp = new XMLHttpRequest();
+                if ( typeof xmlhttp.overrideMimeType != 'undefined') { xmlhttp.overrideMimeType('text/xml'); }
+            } else if (window.ActiveXObject) {
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }  else {
+                alert('Perhaps your browser does not support xmlhttprequests?');
+            }
+            try{
+                xmlhttp.open('GET', proxy_uri, true);
+
+                // Set the callback function
+                xmlhttp.onreadystatechange = function() {
+                    if (xmlhttp.readyState == 4 ){
+                        if( xmlhttp.status == 200) {
+                            var server_status = eval ( "( " + xmlhttp.responseText + ")" );
+                            var colour = server_status.status.attributes["test.prop.1"];
+                            if ( colour === undefined) {
+                                colour = "#999999";
+                            }
+                            var numNeighbours = 0
+                            var neighbourList = server_status.status.neighbourlist
+                            if ( neighbourList === undefined) {
+                            } else {
+                              numNeighbours = neighbourList.length
+                            }
+                            updateStatus(row, column, colour, numNeighbours, gossip_uri);
+                        }else{
+                            updateStatus(row, column, "#000000", 0, gossip_uri);
+                        }
+                    } else {
+                      // don't do anything
+                    }
+                };
+            
+                xmlhttp.send(null);
+            }catch (e){
+                updateStatus(row, column, "#000000");
+            }
+        }
+        
+        function drawTable(){
+            var mytable     = document.getElementById("nodes_table");
+            mytable.border="2";
+            mytablebody = document.createElement("tbody");      
+            for (var i = 0; i < node_matrix.length; i++){
+                mycurrent_row=document.createElement("tr");    
+                for (var j = 0; j < node_matrix[i].length; j++){
+                    mycurrent_cell = document.createElement("td");
+                    js = "showNodeDetails("
+                    js += '"' + node_matrix[i][j] + '","';
+                    js += gossip_matrix[i][j];                    
+                    js += '");'
+                    mycurrent_cell.setAttribute("onClick", js);
+                    mycurrent_cell.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; 
+                    mycurrent_cell.width = 90;
+                    mycurrent_cell.height = 90;                       
+                    mycurrent_row.appendChild(mycurrent_cell);
+                }
+                mytablebody.appendChild(mycurrent_row);
+            }
+            mytable.appendChild(mytablebody);
+        }
+
+        function showNodeDetails(uri, gossip_uri){
+            if ( gossip_uri != 'undefined') { selected = gossip_uri; }
+            node_uri = "http://" + uri + "/status";
+            var proxy_url = 'http://@HOST_NAME@/monitor-app/proxy.php?target=' + encodeURIComponent(node_uri);
+            var xmlhttp = null;
+            if (window.XMLHttpRequest) {
+                xmlhttp = new XMLHttpRequest();
+                if ( typeof xmlhttp.overrideMimeType != 'undefined') { xmlhttp.overrideMimeType('text/xml'); }
+            } else if (window.ActiveXObject) {
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }  else {
+                alert('Perhaps your browser does not support xmlhttprequests?');
+            }
+            
+            xmlhttp.open('GET', proxy_url, true);
+            // Set the callback function
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var server_status = eval ( "( " + xmlhttp.responseText + ")" );
+                        // Output the results
+                    updateDetails(node_uri, server_status);
+                } else {
+                        // waiting for the call to complete
+                }
+            };
+            xmlhttp.send(null);
+        }
+
+        function updateDetails(uri, server_status){
+            var mydetails = document.getElementById("node_details");
+            if ( mydetails.hasChildNodes() ){
+                while ( mydetails.childNodes.length >= 1 ){
+                    mydetails.removeChild( mydetails.firstChild );       
+                } 
+            }
+
+            mytable = document.createElement("table");
+            mytableheader = document.createElement("thead");
+            mytableheader.innerHTML = "Details for Node " + uri;
+            mytable.appendChild(mytableheader);
+            mytablebody = document.createElement("tbody");
+            for (property in server_status.status.attributes){
+                mycurrent_row = document.createElement("tr");
+                cell_one = document.createElement("td");
+                cell_one.innerHTML = property;
+                cell_two = document.createElement("td");
+                cell_two.innerHTML = server_status.status.attributes[property];
+                mycurrent_row.appendChild(cell_one);
+                mycurrent_row.appendChild(cell_two);
+                mytablebody.appendChild(mycurrent_row);
+            }
+            mycurrent_row = document.createElement("tr");
+            cell_one = document.createElement("td");
+            cell_one.innerHTML = "Neighbour List";
+            cell_two = document.createElement("td");
+            cell_two.innerHTML = server_status.status.neighbourlist;
+            mycurrent_row.appendChild(cell_one);
+            mycurrent_row.appendChild(cell_two);
+            mytablebody.appendChild(mycurrent_row);
+
+            mytable.appendChild(mytablebody);
+            mydetails.appendChild(mytable);
+        }
+
+        function updateColour(uri, colour) {
+            alert("Sending colour update to: " + uri);
+            var host = uri.split(":")[0]
+            var port = uri.split(":")[1]
+            var proxy_uri = 'http://@HOST_NAME@/monitor-app/colour-proxy.php?target=' + encodeURIComponent(host) + '&port='  + encodeURIComponent(port) + '&colour='  + encodeURIComponent(colour);
+            var xmlhttp = null;
+            if (window.XMLHttpRequest) {
+                xmlhttp = new XMLHttpRequest();
+                if ( typeof xmlhttp.overrideMimeType != 'undefined') { xmlhttp.overrideMimeType('text/xml'); }
+            } else if (window.ActiveXObject) {
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }  else {
+                alert('Perhaps your browser does not support xmlhttprequests?');
+            }
+            
+            try{
+              xmlhttp.open('GET', proxy_uri, true);
+
+              // Set the callback function
+              xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 ){
+                  if( xmlhttp.status == 200) {
+                  }else{
+                    setTimeout(updateColour(uri,colour),500);
+                  }
+                } else {
+                }
+              };
+              xmlhttp.send(null);
+          }catch (e){
+          }
+        }
+
+        function buildChangeColour(colour) {
+            return function() { 
+                updateColour(selected, colour);
+            };
+        }
+    </script>
+
+</head>
+<body onload="drawTable();">
+    <table id="nodes_table">
+    </table>
+    <hr/>
+    <div id="node_details">
+    </div>
+    <div id="colorpicker201" class="colorpicker201"></div>
+    <input type="button" value="Select Color" onclick="showColorGrid2(buildChangeColour);" >
+</body>
+</html>
