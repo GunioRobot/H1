@@ -10,6 +10,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.recipes.lock.WriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -222,9 +223,13 @@ public class ZkClock implements Clock {
 				LOG.info(
 					String.format("Sequence %s exceeds max for bucket (%s)",
 									sequence, rolloverValue));
+
 				Lock lock = myLockProvider.getLock("/" + key + "/lock");
 				try{
 					lock.lockInterruptibly();
+					LOG.info(
+						String.format("Obtained lock for key %s, proceeding",
+										key));
 					String activeBucket = getActiveBucket(key); 
 					if (bucket.equals(activeBucket)){
 						LOG.info(
@@ -239,6 +244,7 @@ public class ZkClock implements Clock {
 					}
 					return newSequenceNode(key, activeBucket);
 				}finally{
+					LOG.info(String.format("Releasing lock on key %s", key));
 					lock.unlock();
 				}
 			}else{

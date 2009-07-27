@@ -177,7 +177,7 @@
 	</target>
 
     <!-- Compile all application classes -->
-    <target name="compile-app" depends="init, compile-version-file">
+    <target name="compile-app" depends="init, compile-version-file, resolve-runtime">
         <echo message="Compiling app code"/>
         <javac srcdir="${src.java}" destdir="${build.app}" optimize="on" debug="on" deprecation="on" encoding="UTF-8">
             <classpath refid="project.classpath"/>
@@ -190,16 +190,14 @@
         <echo message="Compiling tests"/>
         <mkdir dir="${build.test}"/>
     	
-    	<!--
     	<path id="print.classpath">
  	      	<path refid="test.classpath"/>
-    		<path refid="resolved.build.classpath"/>
+    		<!--path refid="resolved.build.classpath"/-->
     	</path>
     	<antcall target="print-path">
     		<reference refid="print.classpath" torefid="print.path"/>
     	</antcall>
-    	-->
-    	
+    	<echo message="foo"/>
         <javac srcdir="${test.src}" destdir="${build.test}" optimize="on" debug="on" deprecation="on" encoding="UTF-8">
             <classpath refid="test.classpath"/>
             <classpath refid="resolved.build.classpath"/>

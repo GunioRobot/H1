@@ -195,22 +195,17 @@ public class ZkLock implements Lock, Watcher{
 		}	
 	}
 	
-	private void waitForNotification() throws InterruptedException{
+	private synchronized void waitForNotification() throws InterruptedException{
 		// wait for notification from event when  
 		// next lowest lock node is deleted
-		synchronized(this){
-			wait();
+		wait();
 			LOG.info("Thread came out of waiting state, " +
 					 "checking if I own the lock");
-		}
 	}
 	
 	@Override
-	public void process(WatchedEvent event) {
+	public synchronized void process(WatchedEvent event) {
 		LOG.info("WatchedEvent fired: " + event.toString());
-		synchronized (this) {
-			notifyAll();	
-		}
+		notify();	
 	}
-	
 }
