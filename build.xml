@@ -190,15 +190,17 @@
         <echo message="Compiling tests"/>
         <mkdir dir="${build.test}"/>
     	
+    	<!--
     	<path id="print.classpath">
  	      	<path refid="test.classpath"/>
-    		<!--path refid="resolved.build.classpath"/-->
+    		<path refid="resolved.build.classpath">
     	</path>
     	<antcall target="print-path">
     		<reference refid="print.classpath" torefid="print.path"/>
     	</antcall>
-    	<echo message="foo"/>
-        <javac srcdir="${test.src}" destdir="${build.test}" optimize="on" debug="on" deprecation="on" encoding="UTF-8">
+    	-->
+
+    	<javac srcdir="${test.src}" destdir="${build.test}" optimize="on" debug="on" deprecation="on" encoding="UTF-8">
             <classpath refid="test.classpath"/>
             <classpath refid="resolved.build.classpath"/>
         </javac>
@@ -212,14 +214,16 @@
       
 	  <!-- Tests that require us to use the definalizer agent to convert final classes -->
       <path id="definalized.test.classes">
-          <fileset dir="${build.test}">
-          </fileset>
+          <!--fileset dir="${build.test}">
+          </fileset-->
       </path>
 	
 	  <!-- Tests that don't require us to use the definalizer agent -->
 	  <path id="standard.test.classes">
 	      <fileset dir="${build.test}">
 	  	      <exclude name="**/*$*"/>
+	          <exclude name="**/com/talis/platform/sequencing/zookeeper/NullWatcher.class"/>
+	      	<exclude name="**/com/talis/platform/sequencing/zookeeper/ZkTestHelper.class"/>
 	  	  </fileset>
 	  </path>
 	
@@ -367,7 +371,7 @@
     <target name="pmd" description="Run PMD against the source code" depends="resolve-pmd">
       <taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask" classpathref="resolved.pmd.classpath"/>
       <mkdir dir="${reports.pmd}"/>
-      <pmd targetjdk="1.6" rulesetfiles="./ruleset.xml" failOnRuleViolation="no" maxRuleViolations="10">
+      <pmd targetjdk="1.6" rulesetfiles="./ruleset.xml" failOnRuleViolation="no" maxRuleViolations="100">
         <formatter type="html" toFile="${reports.pmd}/index.html"/>
         <formatter type="xml" toFile="${reports.pmd}/pmd_report.xml"/>
         <formatter type="text" toConsole="true"/>
