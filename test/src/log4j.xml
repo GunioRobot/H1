@@ -15,12 +15,12 @@
     </appender>
     
     <logger name="com.talis">
-        <level value="info"/> 
+        <level value="debug"/> 
     </logger> 
     
     <root> 
     	<level value="warn"/>
-        <appender-ref ref="NULL" /> 
+        <appender-ref ref="stdout" /> 
 	</root> 
 
 </log4j:configuration>

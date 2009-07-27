@@ -19,6 +19,8 @@
 
         <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.5.6"/>
        
+        <dependency org="org.apache" name="zookeeper" rev="3.2.0"/>
+       
         <!-- jars only used for build -->
 	    <dependency org="junit" name="junit" rev="4.5" conf="build->default"/>
 		<dependency org="cobertura" name="cobertura" rev="1.9rc1" conf="cobertura->default"/>
