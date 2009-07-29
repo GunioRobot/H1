@@ -77,7 +77,7 @@ public class ZkClockTest {
 
 		long sequence = clock.getNextSequence(key);
 		assertEquals(1, sequence);
-		assertNotNull(ZK.exists("/" + key + "/buckets/0000000000/0000000001", false));
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000001", false));
 	}
 
 	@Test
@@ -95,11 +95,11 @@ public class ZkClockTest {
 	public void createNextSequenceInExistingBucket() throws Exception{
 		ZkClock clock = new ZkClock(zkProvider, lockProvider);
 		clock.getNextSequence(key);
-		assertNotNull(ZK.exists("/" + key + "/buckets/0000000000/0000000001", false));
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000001", false));
 		
 		long sequence = clock.getNextSequence(key);
 		assertEquals(2, sequence);
-		assertNotNull(ZK.exists("/" + key + "/buckets/0000000000/0000000002", false));
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000002", false));
 	}
 	
 	@Test
@@ -118,9 +118,9 @@ public class ZkClockTest {
 		
 		long sequence = clock.getNextSequence(key);
 		assertEquals(4, sequence);
-		assertNotNull(ZK.exists("/" + key + "/buckets/0000000000/0000000001", false));
-		assertNotNull(ZK.exists("/" + key + "/buckets/0000000000/0000000002", false));
-		assertNotNull(ZK.exists("/" + key + "/buckets/0000000001/0000000001", false));
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000001", false));
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000002", false));
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000001/s0000000001", false));
 	}
 	
 	@Test

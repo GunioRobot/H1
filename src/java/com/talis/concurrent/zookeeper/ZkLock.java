@@ -26,8 +26,9 @@ public class ZkLock implements Lock, Watcher{
 		new Comparator<String>(){
 			@Override
 			public int compare(String first, String second) {
-				return new Long(Long.parseLong(first))
-							.compareTo(Long.parseLong(second));
+				return first.compareTo(second);
+//				return new Long(Long.parseLong(first))
+//							.compareTo(Long.parseLong(second));
 			}
 		};
 	public static final int ALL_VERSIONS = -1;
@@ -39,7 +40,11 @@ public class ZkLock implements Lock, Watcher{
 	public ZkLock(ZooKeeper keeper, String key){
 		LOG.info("Initialising Lock instance");
 		myKeeper = keeper;
-		myKey = key;
+		if (! key.endsWith("/")){
+			myKey = key + "/";
+		}else{
+			myKey = key;
+		}
 	}
 	
 	@Override
@@ -52,7 +57,7 @@ public class ZkLock implements Lock, Watcher{
 	public Condition newCondition() {
 		throw new UnsupportedOperationException("Not Supported");
 	}
-	
+		
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
 		if (null != myLockRequest){
@@ -137,11 +142,30 @@ public class ZkLock implements Lock, Watcher{
 		removeLockRequest();
 	}
 
+	private void checkLockNodeExists(){
+		LOG.info(String.format("Checking lockNode exists for key %s", myKey));
+		try{
+			if (null == myKeeper.exists(myKey + "lock", false)){
+				LOG.info(String.format("No lockNode exists for key %s, creating", 
+									   myKey));
+				myKeeper.create(myKey + "lock", 
+						ZkClock.EMPTY_DATA, 
+						ZkClock.DEFAULT_ACL, 
+						CreateMode.PERSISTENT);
+				LOG.info(String.format("Created lockNodes for key %s", myKey));
+			}
+		}catch(KeeperException e){
+			LOG.error("ERROR: ", e);
+		}catch(InterruptedException e){
+			LOG.error("ERROR: ", e);
+		}
+	}
+	
 	private void removeLockRequest(){
 		LOG.info(String.format("Relinquishing lock request for %s : %s", 
 				myKey, myLockRequest));
 		try{
-			myKeeper.delete(myKey + "/" + myLockRequest, ALL_VERSIONS);
+			myKeeper.delete(myKey + "lock/" + myLockRequest, ALL_VERSIONS);
 			myLockRequest = null;
 		} catch (InterruptedException e) {
 			LOG.warn("Unable to cancel lock request", e);
@@ -152,7 +176,8 @@ public class ZkLock implements Lock, Watcher{
 	}
 	
 	private void requestLock() throws KeeperException, InterruptedException{
-		myLockRequest = myKeeper.create(myKey + "/", 
+		checkLockNodeExists();
+		myLockRequest = myKeeper.create(myKey + "lock/a", 
 				ZkClock.EMPTY_DATA, 
 				ZkClock.DEFAULT_ACL, 
 				CreateMode.EPHEMERAL_SEQUENTIAL);
@@ -162,7 +187,7 @@ public class ZkLock implements Lock, Watcher{
 	
 	private List<String> getOrderedLockRequests() 
 	throws InterruptedException, KeeperException{
-		List<String> lockRequests = myKeeper.getChildren(myKey, false);
+		List<String> lockRequests = myKeeper.getChildren(myKey + "lock", false);
 		Collections.sort(lockRequests, SEQUENTIAL_NODE_COMPARATOR);
 		LOG.info(String.format("Currently active lock requests for %s : %s",
 				myKey, lockRequests));
@@ -181,7 +206,7 @@ public class ZkLock implements Lock, Watcher{
 		}else{
 			int nextLowestLockIndex = lockRequests.indexOf(myLockRequest) - 1;
 			Stat nextLowestLockStat = 
-				myKeeper.exists(myKey + "/" + 
+				myKeeper.exists(myKey + "lock/" + 
 									lockRequests.get(nextLowestLockIndex), 
 								this);
 			if (null != nextLowestLockStat){
@@ -199,8 +224,8 @@ public class ZkLock implements Lock, Watcher{
 		// wait for notification from event when  
 		// next lowest lock node is deleted
 		wait();
-			LOG.info("Thread came out of waiting state, " +
-					 "checking if I own the lock");
+		LOG.info("Thread came out of waiting state, " +
+				 "checking if I own the lock");
 	}
 	
 	@Override

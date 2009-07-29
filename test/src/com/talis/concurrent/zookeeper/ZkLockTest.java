@@ -19,10 +19,13 @@ import java.util.concurrent.locks.Lock;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
 
 import com.talis.platform.sequencing.zookeeper.NullWatcher;
 import com.talis.platform.sequencing.zookeeper.ZkClock;
@@ -77,18 +80,20 @@ public class ZkLockTest {
 	public void obtainLockImmediatelyIfNotAlreadyLocked() throws Exception{
 		ZkLock theLock = new ZkLock(ZK, key);
 		theLock.lockInterruptibly();
-		assertNotNull(ZK.exists(key + "/0000000000", false));
+		assertNotNull(ZK.exists(key + "/lock/a0000000000", false));
 	}
 	
 	@Test
 	public void lockRequestsAreCreatedSequentialAndEphemeral() throws Exception{
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
-		mockKeeper.create(key + "/" , ZkClock.EMPTY_DATA, 
+		mockKeeper.exists(key + "/lock" , false);
+		expectLastCall().andReturn(new Stat());
+		mockKeeper.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
-		expectLastCall().andReturn(key + "/0000000000");
+		expectLastCall().andReturn(key + "lock/a0000000000");
 		
-		mockKeeper.getChildren(key , false); 
-		expectLastCall().andReturn(new ArrayList<String>(){{ add("0000000000");}});		
+		mockKeeper.getChildren(key + "/lock", false); 
+		expectLastCall().andReturn(new ArrayList<String>(){{ add("a0000000000");}});		
 
 		replay(mockKeeper);
 		
@@ -99,8 +104,6 @@ public class ZkLockTest {
 	
 	@Test
 	public void waitForLockBlocksIfKeyAlreadyLocked() throws Exception{
-		ZK.create(key + "/", ZkClock.EMPTY_DATA, 
-				ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
 		long timeout = 200l;
 		final Lock theLock = new ZkLock(ZK, key);
 		Thread client = new Thread(){
@@ -127,12 +130,13 @@ public class ZkLockTest {
 
 	@Test
 	public void obtainLockOnceLockedKeyBecomesAvailable() throws Exception{
+		ZK.create(key + "/lock" , ZkClock.EMPTY_DATA, 
+				ZkClock.DEFAULT_ACL, CreateMode.PERSISTENT);
 		String firstLock = 
-			ZK.create(key + "/" , ZkClock.EMPTY_DATA, 
+			ZK.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
-		assertEquals(key + "/0000000000", firstLock);
-		String secondLock = key + "/0000000001";
-				
+		assertEquals(key + "/lock/a0000000000", firstLock);
+		String secondLock = key + "/lock/a0000000001";
 		long blockWaitTime = 500l;
 		final Lock theLock = new ZkLock(ZK, key);
 		TimedLockClient client = new TimedLockClient(ZK, key); 
@@ -154,19 +158,21 @@ public class ZkLockTest {
 	
 	@Test
 	public void waitForMultipleOtherClientsBeforeObtainingLock() throws Exception{
+		ZK.create(key + "/lock" , ZkClock.EMPTY_DATA, 
+				ZkClock.DEFAULT_ACL, CreateMode.PERSISTENT);
 		String firstLock = 
-			ZK.create(key + "/" , ZkClock.EMPTY_DATA, 
+			ZK.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
 		String secondLock = 
-			ZK.create(key + "/" , ZkClock.EMPTY_DATA, 
+			ZK.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
 		String thirdLock = 
-			ZK.create(key + "/" , ZkClock.EMPTY_DATA, 
+			ZK.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
-		assertEquals(key + "/0000000000", firstLock);
-		assertEquals(key + "/0000000001", secondLock);
-		assertEquals(key + "/0000000002", thirdLock);
-		String fourthLock = key + "/0000000003";
+		assertEquals(key + "/lock/a0000000000", firstLock);
+		assertEquals(key + "/lock/a0000000001", secondLock);
+		assertEquals(key + "/lock/a0000000002", thirdLock);
+		String fourthLock = key + "/lock/a0000000003";
 		assertNull(ZK.exists(fourthLock, false));
 		long blockWaitTime = 100l;
 		
@@ -201,7 +207,7 @@ public class ZkLockTest {
 	public void unlockWhenLockIsHeldRemovesZooKeeperNode() 
 	throws InterruptedException, KeeperException{
 		Lock theLock = new ZkLock(ZK, key);
-		String lockNode = key + "/0000000000";
+		String lockNode = key + "/lock/a0000000000";
 		assertNull(ZK.exists(lockNode, false));
 		
 		theLock.lockInterruptibly();
@@ -214,7 +220,7 @@ public class ZkLockTest {
 	public void unlockWhenLockIsNotHeldIsNoop() 
 	throws InterruptedException, KeeperException{
 		Lock theLock = new ZkLock(ZK, key);
-		String lockNode = key + "/0000000000";
+		String lockNode = key + "/lock/a0000000000";
 		assertNull(ZK.exists(lockNode, false));
 		theLock.unlock();
 		assertNull(ZK.exists(lockNode, false));
@@ -238,8 +244,10 @@ public class ZkLockTest {
 	@Test
 	public void tryLockReturnsFalseIfKeyAlreadyLocked()
 	throws Exception{
+		ZK.create(key + "/lock" , ZkClock.EMPTY_DATA, 
+				ZkClock.DEFAULT_ACL, CreateMode.PERSISTENT);
 		String firstLock = 
-			ZK.create(key + "/" , ZkClock.EMPTY_DATA, 
+			ZK.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
 		Lock theLock = new ZkLock(ZK, key);
 		assertFalse(theLock.tryLock());
@@ -259,7 +267,9 @@ public class ZkLockTest {
 	public void tryLockReturnsFalseIfEncountersInterruptedExceptionWhenMakingRequest()
 	throws Exception{
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
-		mockKeeper.create(	key + "/",
+		mockKeeper.exists(key + "/lock", false);
+		expectLastCall().andReturn(new Stat());
+		mockKeeper.create(	key + "/lock/a",
 							ZkClock.EMPTY_DATA, 
 							ZkClock.DEFAULT_ACL,
 							CreateMode.EPHEMERAL_SEQUENTIAL);
@@ -275,7 +285,9 @@ public class ZkLockTest {
 	public void tryLockReturnsFalseIfEncountersKeeperExceptionWhenMakingRequest()
 	throws Exception{
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
-		mockKeeper.create(	key + "/",
+		mockKeeper.exists(key + "/lock", false);
+		expectLastCall().andReturn(new Stat());
+		mockKeeper.create(	key + "/lock/a",
 							ZkClock.EMPTY_DATA, 
 							ZkClock.DEFAULT_ACL,
 							CreateMode.EPHEMERAL_SEQUENTIAL);
@@ -291,14 +303,16 @@ public class ZkLockTest {
 	public void tryLockReturnsFalseAndCleansUpIfEncountersInterruptedExceptionWhenCheckingQueue()
 	throws Exception{
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
-		mockKeeper.create(	key + "/",
+		mockKeeper.exists(key + "/lock", false);
+		expectLastCall().andReturn(new Stat());
+		mockKeeper.create(	key + "/lock/a",
 							ZkClock.EMPTY_DATA, 
 							ZkClock.DEFAULT_ACL,
 							CreateMode.EPHEMERAL_SEQUENTIAL);
-		expectLastCall().andReturn(key + "/0000000000");
-		mockKeeper.getChildren(key, false);
+		expectLastCall().andReturn(key + "/lock/a0000000000");
+		mockKeeper.getChildren(key + "/lock", false);
 		expectLastCall().andThrow(new InterruptedException("TEST"));
-		mockKeeper.delete(key + "/0000000000", ZkLock.ALL_VERSIONS);
+		mockKeeper.delete(key + "/lock/a0000000000", ZkLock.ALL_VERSIONS);
 		replay(mockKeeper);
 		
 		Lock theLock = new ZkLock(mockKeeper, key);
@@ -310,14 +324,16 @@ public class ZkLockTest {
 	public void tryLockReturnsFalseAndCleansUpIfEncountersKeeperExceptionWhenCheckingQueue()
 	throws Exception{
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
-		mockKeeper.create(	key + "/",
+		mockKeeper.exists(key + "/lock", false);
+		expectLastCall().andReturn(new Stat());
+		mockKeeper.create(	key + "/lock/a",
 							ZkClock.EMPTY_DATA, 
 							ZkClock.DEFAULT_ACL,
 							CreateMode.EPHEMERAL_SEQUENTIAL);
-		expectLastCall().andReturn(key + "/0000000000");
-		mockKeeper.getChildren(key, false);
+		expectLastCall().andReturn(key + "/lock/a0000000001");
+		mockKeeper.getChildren(key + "/lock", false);
 		expectLastCall().andThrow(new DummyKeeperException());
-		mockKeeper.delete(key + "/0000000000", ZkLock.ALL_VERSIONS);
+		mockKeeper.delete(key + "/lock/a0000000001", ZkLock.ALL_VERSIONS);
 		replay(mockKeeper);
 		
 		Lock theLock = new ZkLock(mockKeeper, key);
@@ -328,16 +344,18 @@ public class ZkLockTest {
 	@Test
 	public void afterFailedTryLockClientsCanStillObtainLocks()
 	throws Exception{
+		ZK.create(key + "/lock" , ZkClock.EMPTY_DATA, 
+				ZkClock.DEFAULT_ACL, CreateMode.PERSISTENT);
 		String firstLock = 
-			ZK.create(key + "/" , ZkClock.EMPTY_DATA, 
+			ZK.create(key + "/lock/a" , ZkClock.EMPTY_DATA, 
 					ZkClock.DEFAULT_ACL, CreateMode.EPHEMERAL_SEQUENTIAL);
 		Lock theLock = new ZkLock(ZK, key);
 		assertFalse(theLock.tryLock());
 		assertEquals(1, ZK.getChildren(key, false).size());
 		ZK.delete(firstLock, ZkLock.ALL_VERSIONS);
-		assertEquals(0, ZK.getChildren(key, false).size());
+		assertEquals(0, ZK.getChildren(key + "/lock", false).size());
 		assertTrue(theLock.tryLock());
-		assertEquals(1, ZK.getChildren(key, false).size());
+		assertEquals(1, ZK.getChildren(key + "/lock", false).size());
 	}
 	
 	@Test

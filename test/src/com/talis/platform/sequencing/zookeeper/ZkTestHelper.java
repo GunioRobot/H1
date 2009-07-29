@@ -47,7 +47,7 @@ public class ZkTestHelper {
         
         final int PORT = getPort(hostPort);
         if (factory == null) {
-            factory = new NIOServerCnxn.Factory(PORT,maxCnxns);
+            factory = new NIOServerCnxn.Factory(PORT);
         }
         factory.startup(zks);
 

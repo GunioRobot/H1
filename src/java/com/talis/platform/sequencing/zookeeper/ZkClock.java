@@ -27,13 +27,10 @@ public class ZkClock implements Clock {
 	 * This would save doing a lookup each time, but need to guarantee
 	 * currency - poss use sync() when rolling over/creating new
 	 * bucket as this will happen infreqently (once every 2^127 writes)
-	 * 
-	 * TODO: Also need to lock on key when creating a new bucket - otherwise
-	 * there's a race between instances and we could end up with partially
-	 * filled buckets
 	 */
 	
 	public static final byte[] EMPTY_DATA = new byte[0];
+	
 	public static final List<ACL> DEFAULT_ACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
 	public static final int DEFAULT_ROLLOVER_VALUE = Integer.MAX_VALUE - 1000000;
 	public static final String ROLLOVER_VALUE_PROPERTY = 
@@ -48,8 +45,9 @@ public class ZkClock implements Clock {
 		new Comparator<String>(){
 			@Override
 			public int compare(String first, String second) {
-				return new Long(Long.parseLong(second))
-							.compareTo(Long.parseLong(first));
+				return second.compareTo(first);					
+//				return new Long(Long.parseLong(second))
+//							.compareTo(Long.parseLong(first));
 			}
 		}; 			
 				
@@ -78,7 +76,7 @@ public class ZkClock implements Clock {
 				if (null == myZooKeeper.exists("/" + key, false)){
 					createKey(key);
 				}
-				Lock lock = myLockProvider.getLock("/" + key + "/lock");
+				Lock lock = myLockProvider.getLock("/" + key);
 				try{
 					lock.lockInterruptibly();
 					LOG.info(String.format("Acquired lock on key /%s/lock", key));
@@ -90,7 +88,7 @@ public class ZkClock implements Clock {
 					//TODO : fix this
 					LOG.error("ERROR", e);
 				}finally{
-					LOG.info(String.format("Releasing lock on key /%s/lock", key));
+					LOG.info(String.format("Releasing lock on key /%s", key));
 					lock.unlock();
 				}
 			}
@@ -128,7 +126,7 @@ public class ZkClock implements Clock {
 	private String createKey(String key) 
 	throws KeeperException, InterruptedException{
 		LOG.debug(String.format("Creating new root node for key %s", key));
-		Lock lock = myLockProvider.getLock("/root-lock"); // TODO - fix this hardcoding
+		Lock lock = myLockProvider.getLock("/"); // TODO - fix this hardcoding
 		LOG.info(String.format("Locking root to create key %s", key));
 		try {
 			lock.lockInterruptibly();
@@ -173,7 +171,7 @@ public class ZkClock implements Clock {
 	throws InterruptedException, KeeperException{
 		LOG.debug(String.format("Creating new Bucket for Key %s", key));
 		try {
-			String bucketNode = myZooKeeper.create("/" + key + "/buckets/", 
+			String bucketNode = myZooKeeper.create("/" + key + "/buckets/b", 
 											EMPTY_DATA, 
 											DEFAULT_ACL, 
 											CreateMode.PERSISTENT_SEQUENTIAL);
@@ -210,7 +208,7 @@ public class ZkClock implements Clock {
 	throws InterruptedException, KeeperException{
 		try {
 			String sequenceNode = 
-				myZooKeeper.create( "/" + key + "/buckets/" + bucket + "/", 
+				myZooKeeper.create( "/" + key + "/buckets/" + bucket + "/s", 
 									EMPTY_DATA, 
 									DEFAULT_ACL, 
 									CreateMode.PERSISTENT_SEQUENTIAL);
@@ -223,7 +221,7 @@ public class ZkClock implements Clock {
 					String.format("Sequence %s exceeds max for bucket (%s)",
 									sequence, rolloverValue));
 
-				Lock lock = myLockProvider.getLock("/" + key + "/lock");
+				Lock lock = myLockProvider.getLock("/" + key);
 				try{
 					lock.lockInterruptibly();
 					LOG.info(
@@ -247,7 +245,7 @@ public class ZkClock implements Clock {
 					lock.unlock();
 				}
 			}else{
-				long multiplier = Long.parseLong(bucket);
+				long multiplier = Long.parseLong(bucket.substring(1));
 				return (multiplier * rolloverValue) + sequence;
 			}
 				
@@ -264,6 +262,6 @@ public class ZkClock implements Clock {
 
 	private static Long getNumericTail(String path){
 		return Long.parseLong(path.substring(
-				 path.lastIndexOf("/") + 1));
+				 path.lastIndexOf("/") + 2));
 	}
 }
