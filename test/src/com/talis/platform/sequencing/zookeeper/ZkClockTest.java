@@ -15,6 +15,7 @@ import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,8 +69,18 @@ public class ZkClockTest {
 		assertEquals(1, sequence);
 		assertEquals(sequence, getNodeDataAsLong(key));
 	}
-
+	
 	@Test
+	public void clockSurvivesDisconnectionFromServer() throws Exception{
+		ZkClock clock = new ZkClock(ZK);
+		assertEquals(0, clock.getNextSequence(key));
+		TEST_HELPER.stopServer();
+		Thread.sleep(10000l);
+		TEST_HELPER.startServer();
+		assertEquals(1, clock.getNextSequence(key));
+	}
+
+	@Test 
 	public void hammerClock() throws Exception{
 		int iterations = 10000;
 		ZkClock clock = new ZkClock(ZK);
