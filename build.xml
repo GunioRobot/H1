@@ -127,11 +127,6 @@
         <ivy:cachepath pathid="resolved.pmd.classpath" resolveId="pmd" keep="true" />    	
     </target>
 	
-	<target name="resolve-demo" depends="init">
-	    <ivy:resolve file="./ivy.xml" conf="demo" resolveId="demo"/>
-	    <ivy:cachepath pathid="resolved.demo.classpath" resolveId="demo" keep="true" />
-	</target>
-	
 	<!-- Set the property that we'll use to build the version file when
 	     the build is a manual one (we can tell because if this is an 
 	     automated build under hudson, ${env.BUILD_NUMBER} will be set 

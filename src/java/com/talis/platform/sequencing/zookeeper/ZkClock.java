@@ -1,165 +1,107 @@
 package com.talis.platform.sequencing.zookeeper;
 
-import java.util.Collections;
-import java.util.Comparator;
+import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.talis.concurrent.LockProvider;
 import com.talis.platform.sequencing.Clock;
 
 public class ZkClock implements Clock {
 	
 	static final Logger LOG = LoggerFactory.getLogger(ZkClock.class);
 	
-	/**
-	 * TODO: Can watches be used to keep track of latest bucket?
-	 * This would save doing a lookup each time, but need to guarantee
-	 * currency - poss use sync() when rolling over/creating new
-	 * bucket as this will happen infreqently (once every 2^127 writes)
-	 */
-	
-	public static final byte[] EMPTY_DATA = new byte[0];
-	
+	public static final byte[] DEFAULT_DATA = 
+		ByteBuffer.allocate(8).putLong(-1).array();
 	public static final List<ACL> DEFAULT_ACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
-	public static final int DEFAULT_ROLLOVER_VALUE = Integer.MAX_VALUE - 1000000;
-	public static final String ROLLOVER_VALUE_PROPERTY = 
-		"com.talis.platform.sequencing.zookeeper.rollover";
 	
-	private static final Long ROLLOVER_VALUE = 
-		Long.getLong(ROLLOVER_VALUE_PROPERTY) != null ?
-				Long.getLong(ROLLOVER_VALUE_PROPERTY) :
-					DEFAULT_ROLLOVER_VALUE;
-	
-	private static final Comparator<String> BUCKET_COMPARATOR = 
-		new Comparator<String>(){
-			@Override
-			public int compare(String first, String second) {
-				return second.compareTo(first);					
-//				return new Long(Long.parseLong(second))
-//							.compareTo(Long.parseLong(first));
-			}
-		}; 			
-				
-	private Provider<ZooKeeper> myZooKeeperProvider;
-	private LockProvider myLockProvider; 
 	private ZooKeeper myZooKeeper;
-	
+	private long retryDelay = 500L;
+    private int retryCount = 10;
+    
 	@Inject
-	public ZkClock(Provider<ZooKeeper> zooKeeperProvider, 
-					LockProvider lockProvider){
+	public ZkClock(ZooKeeper zooKeeper){
 		LOG.info("Initialising ZooKeeper backed Clock instance");
-		myZooKeeperProvider = zooKeeperProvider;
-		myLockProvider = lockProvider;
+		myZooKeeper = zooKeeper;
 	}
 	
 	@Override
-	public long getNextSequence(String key) throws InterruptedException, Exception{
-		if (null == myZooKeeper){
-			myZooKeeper = myZooKeeperProvider.get();
-		}
-		String activeBucket = null;
-		try{
-			activeBucket = getActiveBucket(key);
-		}catch(KeeperException e){
-			if (e.code().equals(KeeperException.Code.NONODE)){
-				if (null == myZooKeeper.exists("/" + key, false)){
-					createKey(key);
+	public long getNextSequence(String key) throws InterruptedException, Exception{ 
+		KeeperException exception = null;
+		for (int i = 0; i < retryCount; i++) {
+			try {
+				return incrementCounter(key);
+			} catch (KeeperException.SessionExpiredException e) {
+				LOG.warn("Session expired for: " + myZooKeeper + 
+						" so reconnecting due to: " + e, e);
+				throw e;
+			} catch (KeeperException.ConnectionLossException e) {
+				if (exception == null) {
+					exception = e;
 				}
-				Lock lock = myLockProvider.getLock("/" + key);
-				try{
-					lock.lockInterruptibly();
-					LOG.info(String.format("Acquired lock on key /%s/lock", key));
-					activeBucket = getActiveBucket(key);
-					if (null == activeBucket){
-						activeBucket = newBucketNode(key);
-					}
-				}catch(KeeperException e1){
-					//TODO : fix this
-					LOG.error("ERROR", e);
-				}finally{
-					LOG.info(String.format("Releasing lock on key /%s", key));
-					lock.unlock();
-				}
+				LOG.debug("Attempt " + i + " failed with connection loss so " +
+						"attempting to reconnect: " + e, e);
+				retryWithDelay(i);
 			}
 		}
-		return newSequenceNode(key, activeBucket);
+		throw exception;
 	}
 	
-	private void deleteNode(String fullpath){
-		LOG.debug(String.format("Deleting %s", fullpath));
-//		try {
-//			myZooKeeper.delete(fullpath, -1);
-			LOG.debug(String.format("Deleted %s", fullpath));
-//		} catch (InterruptedException e) {
-//			LOG.error("ERROR: " , e);
-//		} catch (KeeperException e) {
-//			LOG.error("ERROR: " , e);
-//		}
-	}
-	
-	private String getActiveBucket(String key) 
+	private long incrementCounter(String key) 
 	throws KeeperException, InterruptedException{
-		LOG.debug(String.format("Getting active bucket for key %s", key));
-		try {
-			List<String> buckets = 
-				myZooKeeper.getChildren("/" + key + "/buckets", false);
-			if (buckets.isEmpty()){
-				LOG.debug(String.format("No active bucket found for key %s", key));
-				return null;
-			}else{
-				Collections.sort(buckets, BUCKET_COMPARATOR);
-				LOG.debug(
-					String.format("Bucket %s is active for key %s", 
-									buckets.get(0), key));
-				return buckets.get(0);
+		LOG.debug(String.format("Getting next sequence for key %s", key));
+		Stat stat = new Stat();
+		boolean committed = false;
+		long id = 0;
+		while (!committed) {
+			try{
+				byte[] data = myZooKeeper.getData(key, false, stat);
+				ByteBuffer buf = ByteBuffer.wrap(data);
+				id = buf.getLong();
+				buf.rewind();
+				id++;
+				buf.putLong(id);
+				myZooKeeper.setData(key, buf.array(), stat.getVersion());
+				committed = true;
+			}catch( KeeperException.NoNodeException e){
+				createKey(key);
+				return incrementCounter(key);
+			} catch (KeeperException.BadVersionException e) {
+				LOG.debug(String.format("Another client updated key %s, retrying", 
+										key));
+				committed = false;
+			} catch (InterruptedException e) {
+				// at this point, we don't know that our update happened.
+				// we will err on the side of caution and assume that our
+				// update didn't happen. In the worst case, we'll end up
+				// with a wasted sequence number that we'll have to 
+				// apply compensating measures to deal with
+				LOG.error(
+					String.format("Unable to determine status counter increment for key %s. " + 
+						"This may result in unused sequences", key), e);
+				committed = false;
 			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw e;
-		}catch(KeeperException e){
-			LOG.info(String.format("Caught Exception when getting active Bucket for %s", key));
-			throw e;
 		}
+		return id;
 	}
-	
-	private String createKey(String key) 
+
+	private void createKey(String key) 
 	throws KeeperException, InterruptedException{
-		LOG.debug(String.format("Creating new root node for key %s", key));
-		Lock lock = myLockProvider.getLock("/"); // TODO - fix this hardcoding
-		LOG.info(String.format("Locking root to create key %s", key));
+		LOG.debug(String.format("Creating new node for key %s", key));
 		try {
-			lock.lockInterruptibly();
-			LOG.info(String.format("Acquired lock on root, creating key %s",
-									key));
-			
-			String keyNode = myZooKeeper.create("/" + key, 
-											EMPTY_DATA, 
+			String keyNode = myZooKeeper.create(key, 
+											DEFAULT_DATA, 
 											DEFAULT_ACL, 
 											CreateMode.PERSISTENT);
-			String lockNode = myZooKeeper.create("/" + key + "/lock", 
-											EMPTY_DATA, 
-											DEFAULT_ACL, 
-											CreateMode.PERSISTENT);
-			String bucketsNode = 
-							  myZooKeeper.create("/" + key + "/buckets", 
-									  		EMPTY_DATA, 
-									  		DEFAULT_ACL, 
-									  		CreateMode.PERSISTENT);
-			return keyNode;
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			LOG.error("ERROR:", e);
 			throw e;
 		} catch (KeeperException e) {
@@ -167,123 +109,19 @@ public class ZkClock implements Clock {
 				LOG.info(
 					String.format("Tried to create %s, but it already exists. " +
 								"Possibly a race condition", key));
-				return "/" + key;
-			}else{
-				throw e;
-			}
-		}finally{
-			lock.unlock();
-			LOG.info(String.format("Released root lock after creating key %s", 
-									key));
-		}
-	}
-	
-	private String newBucketNode(String key) 
-	throws InterruptedException, KeeperException{
-		LOG.debug(String.format("Creating new Bucket for Key %s", key));
-		try {
-			String bucketNode = myZooKeeper.create("/" + key + "/buckets/b", 
-											EMPTY_DATA, 
-											DEFAULT_ACL, 
-											CreateMode.PERSISTENT_SEQUENTIAL);
-			// now get a sequential child of the bucket - which we'll discard
-			// as we don't want 0 sequences in a bucket
-			String bucket = 
-				bucketNode.substring(bucketNode.lastIndexOf("/") + 1);
-			newSequenceNode(key, bucket);
-			return bucket;
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			LOG.error("ERROR:", e);
-		} catch (KeeperException e) {
-			if (e.code().equals(KeeperException.Code.NONODE)){
-				createKey(key);
-				return newBucketNode(key);
 			}else{
 				throw e;
 			}
 		}
-		throw new IllegalStateException("Should not get here");
 	}
 	
-	private String rolloverBucket(String key, String bucket) 
-	throws InterruptedException, KeeperException{
-		return newBucketNode(key);
-	}
-	
-	protected Long getRolloverValue(){
-		return ROLLOVER_VALUE;
-	}
-	
-	private Long newSequenceNode(String key, String bucket) 
-	throws InterruptedException, KeeperException{
-		try {
-			String sequenceNode = 
-				myZooKeeper.create( "/" + key + "/buckets/" + bucket + "/s", 
-									EMPTY_DATA, 
-									DEFAULT_ACL, 
-									CreateMode.PERSISTENT_SEQUENTIAL);
-
-			Long sequence = getNumericTail(sequenceNode);
-			Long rolloverValue = getRolloverValue(); 
-			
-			if (sequence > rolloverValue){
-				LOG.info(
-					String.format("Sequence %s exceeds max for bucket (%s)",
-									sequence, rolloverValue));
-
-				Lock lock = myLockProvider.getLock("/" + key);
-				try{
-					lock.lockInterruptibly();
-					LOG.info(
-						String.format("Obtained lock for key %s, proceeding",
-										key));
-					String activeBucket = getActiveBucket(key); 
-					if (bucket.equals(activeBucket)){
-						LOG.info(
-							String.format("Bucket %s is still active for key %s, " +
-											"rolling over", key, bucket));
-						activeBucket = rolloverBucket(key, bucket);
-					}else{
-						LOG.info(
-							String.format("Bucket was rolled over to %s for " +
-										  "key %s while obtaining lock", 
-										  activeBucket, key));
-					}
-					return newSequenceNode(key, activeBucket);
-				}finally{
-					LOG.info(String.format("Releasing lock on key %s", key));
-					lock.unlock();
-				}
-			}else{
-				
-				if (sequence >= 1){
-					LOG.info(
-						String.format("Generated next sequence for key %s (%s), " +
-										"deleting previous", key, sequence));
-					String previousPath =
-						String.format("/%s/buckets/%s/s%010d", key, 
-										bucket, sequence - 1 );
-					deleteNode(previousPath);	
-				}
-				
-				long multiplier = Long.parseLong(bucket.substring(1));
-				return (multiplier * rolloverValue) + sequence;
-			}
-				
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			LOG.error("ERROR:", e);
-			throw e;
-		} catch (KeeperException e) {
-			// TODO Auto-generated catch block
-			LOG.error("ERROR:", e);
-			throw e;
-		}
-	}
-
-	private static Long getNumericTail(String path){
-		return Long.parseLong(path.substring(
-				 path.lastIndexOf("/") + 2));
-	}
+	private void retryWithDelay(int attemptCount) {
+        if (attemptCount > 0) {
+            try {
+                Thread.sleep(attemptCount * retryDelay);
+            } catch (InterruptedException e) {
+                LOG.debug("Failed to sleep: " + e, e);
+            }
+        }
+    }
 }
