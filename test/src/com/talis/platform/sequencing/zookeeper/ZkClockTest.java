@@ -11,9 +11,11 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +96,8 @@ public class ZkClockTest {
 	@Test 
 	public void createNextSequenceInExistingBucket() throws Exception{
 		ZkClock clock = new ZkClock(zkProvider, lockProvider);
-		clock.getNextSequence(key);
+		long firstseq = clock.getNextSequence(key);
+		
 		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000001", false));
 		
 		long sequence = clock.getNextSequence(key);
@@ -143,7 +146,19 @@ public class ZkClockTest {
 		assertEquals(3, clock.getNextSequence(key));
 	}
 	
-	@Test 
+	@Test
+	public void deletePreviousSequenceWhenCreatingNewOne() throws Exception{
+		ZkClock clock = new ZkClock(zkProvider, lockProvider);
+		clock.getNextSequence(key);
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000001", false));
+		
+		long sequence = clock.getNextSequence(key);
+		assertEquals(2, sequence);
+		assertNotNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000002", false));
+		assertNull(ZK.exists("/" + key + "/buckets/b0000000000/s0000000001", false));
+	}
+	
+	@Test @Ignore
 	public void timings() throws Exception{
 		int iterations = 10000;
 		ZkClock clock = new ZkClock(zkProvider, lockProvider){

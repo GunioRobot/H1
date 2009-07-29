@@ -19,7 +19,7 @@
         <dependency org="com.noelios.restlet" name="com.noelios.restlet" rev="1.1.4" />
         <dependency org="com.noelios.restlet" name="com.noelios.restlet.ext.simple" rev="1.1.4" />
         <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.5.6"/>
-        <dependency org="org.apache" name="zookeeper" rev="3.1.1"/>
+        <dependency org="org.apache" name="zookeeper" rev="3.2.0"/>
        
         <!-- jars only used for build -->
 	    <dependency org="junit" name="junit" rev="4.5" conf="build->default"/>

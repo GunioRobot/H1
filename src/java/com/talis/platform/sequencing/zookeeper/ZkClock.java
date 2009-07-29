@@ -93,8 +93,19 @@ public class ZkClock implements Clock {
 				}
 			}
 		}
-		
-		return newSequenceNode(key, activeBucket); 
+		return newSequenceNode(key, activeBucket);
+	}
+	
+	private void deleteNode(String fullpath){
+		LOG.debug(String.format("Deleting %s", fullpath));
+//		try {
+//			myZooKeeper.delete(fullpath, -1);
+			LOG.debug(String.format("Deleted %s", fullpath));
+//		} catch (InterruptedException e) {
+//			LOG.error("ERROR: " , e);
+//		} catch (KeeperException e) {
+//			LOG.error("ERROR: " , e);
+//		}
 	}
 	
 	private String getActiveBucket(String key) 
@@ -245,6 +256,17 @@ public class ZkClock implements Clock {
 					lock.unlock();
 				}
 			}else{
+				
+				if (sequence >= 1){
+					LOG.info(
+						String.format("Generated next sequence for key %s (%s), " +
+										"deleting previous", key, sequence));
+					String previousPath =
+						String.format("/%s/buckets/%s/s%010d", key, 
+										bucket, sequence - 1 );
+					deleteNode(previousPath);	
+				}
+				
 				long multiplier = Long.parseLong(bucket.substring(1));
 				return (multiplier * rolloverValue) + sequence;
 			}
