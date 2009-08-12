@@ -12,7 +12,8 @@
         <dependency org="commons-codec" name="commons-codec" rev="1.3" />
         <dependency org="commons-io" name="commons-io" rev="1.4" />
         <dependency org="log4j" name="log4j" rev="1.2.14" />
-        <dependency org="com.google.code.guice" name="guice" rev="1.0-downloaded" />
+        <dependency org="com.google.code.guice" name="guice" rev="2.0" />
+        <dependency org="com.google.code.guice" name="guice-throwingproviders" rev="2.0" />
         <dependency org="jargs" name="jargs" rev="1.0" />
         <dependency org="remotetea" name="oncrpc" rev="1.0" />
         <dependency org="jmxetric-patch" name="jmxetric-patch" rev="0.1-patch-4" />

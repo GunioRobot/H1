@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.server.NIOServerCnxn;
@@ -22,40 +24,40 @@ public class ZkTestHelper {
 	
 	public static int CONNECTION_TIMEOUT = 30000;
 	public static String DEFAULT_HOST_PORT = "127.0.0.1:33221";
-	protected NIOServerCnxn.Factory serverFactory = null;
-	public File tmpDir;
-	public int maxCnxns = 0;
 	
-	public ZkTestHelper() throws IOException{
-		tmpDir = File.createTempFile("zk_", "_test");
-		tmpDir.delete();
-		tmpDir.mkdirs();
-	}	
+	protected Map<String, NIOServerCnxn.Factory> serverFactories = 
+		new HashMap<String, NIOServerCnxn.Factory>();
+	public Map<String, File> tmpDirs = new HashMap<String, File>();
+	
+//	protected NIOServerCnxn.Factory serverFactory = null;
+//	public File tmpDir;
+	public int maxCnxns = 1;
 	
 	public void cleanUp() throws Exception{
-		stopServer();
-		FileUtils.deleteDirectory(tmpDir);
+		for (String hostPort : serverFactories.keySet()){
+			stopServer(hostPort);
+		}
+		for (File tmpDir : tmpDirs.values()){
+			FileUtils.deleteDirectory(tmpDir);
+		}
 	}
 	
     public NIOServerCnxn.Factory createNewServerInstance(File dataDir,
-            NIOServerCnxn.Factory factory, String hostPort, int maxCnxns)
+            String hostPort, int maxCnxns)
         throws IOException, InterruptedException{ 
     	
     	try{
     	
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
-        
-        final int PORT = getPort(hostPort);
-        if (factory == null) {
-            factory = new NIOServerCnxn.Factory(PORT);
-        }
-        factory.startup(zks);
 
-        assertTrue("waiting for server up",
-                   waitForServerUp("127.0.0.1:" + PORT,
-                                              CONNECTION_TIMEOUT));
-    	
-        return factory;
+			final int PORT = getPort(hostPort);
+			NIOServerCnxn.Factory factory = new NIOServerCnxn.Factory(PORT);
+			factory.startup(zks);
+
+			assertTrue("waiting for server up", waitForServerUp("127.0.0.1:"
+					+ PORT, CONNECTION_TIMEOUT));
+
+			return factory;
     	}catch(IOException e){
     		e.printStackTrace();
     		throw e;
@@ -158,17 +160,45 @@ public class ZkTestHelper {
         }
     }
     
-    public void startServer() throws Exception {
-        LOG.info("STARTING server");
-        serverFactory = createNewServerInstance(tmpDir, serverFactory, DEFAULT_HOST_PORT, maxCnxns);
+    public void startServer(String hostPort) throws Exception {
+        LOG.info(String.format("STARTING server %s", hostPort));
+        if (serverFactories.containsValue(hostPort)){
+        	LOG.info(String.format("SERVER already started %s", hostPort));
+        	return;
+        }
+        
+        File dir = tmpDirs.get(hostPort);
+        if (null == dir){
+        	dir = File.createTempFile("zk_", "_test");
+    		dir.delete();
+    		dir.mkdirs();
+    		tmpDirs.put(hostPort, dir);
+        }
+        
+        NIOServerCnxn.Factory serverFactory = 
+        	createNewServerInstance(dir, hostPort, maxCnxns);
+        serverFactories.put(hostPort, serverFactory);
         // ensure that only server and data bean are registered
 //        JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }
+    
+    public void startServer() throws Exception {
+		startServer(DEFAULT_HOST_PORT);
+        // ensure that only server and data bean are registered
+//        JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
+    }
+    
+    public void stopServer() throws Exception{
+    	stopServer(DEFAULT_HOST_PORT);
+    }
 
-    public void stopServer() throws Exception {
-        LOG.info("STOPPING server");
-        shutdownServerInstance(serverFactory, DEFAULT_HOST_PORT);
-        serverFactory = null;
+    public void stopServer(String hostPort) throws Exception {
+        LOG.info(String.format("STOPPING server %s", hostPort));
+        NIOServerCnxn.Factory serverFactory = serverFactories.get(hostPort);
+        if (null != serverFactory){
+        	shutdownServerInstance(serverFactory, hostPort);
+        	serverFactories.remove(hostPort);
+        }
         // ensure no beans are leftover
 //        JMXEnv.ensureOnly();
     }

@@ -259,9 +259,11 @@
         <delete file="${build.cobertura}/cobertura.ser"/>
                     
         <cobertura-instrument todir="${build.cobertura}" datafile="${build.cobertura}/cobertura.ser">
-        	<ignore regex="org.apache.commons.logging.*" />
+        	<ignore regex="org.slf4j.*" />
         	<fileset dir="${build.app}">
         		<include name="**/*.class"/>
+        		<exclude name="**/com/talis/platform/h1/Version.class"/>
+        		<exclude name="**/com/talis/platform/sequencing/zookeeper/ZooKeeperModule.class"/>
             </fileset>
         </cobertura-instrument>
         
