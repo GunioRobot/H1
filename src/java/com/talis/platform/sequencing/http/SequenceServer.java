@@ -11,8 +11,8 @@ import com.google.inject.Injector;
 import com.talis.platform.NullInjector;
 import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 
-public class SequencerServer {
-	private static final Logger LOG = LoggerFactory.getLogger(SequencerServer.class);
+public class SequenceServer {
+	private static final Logger LOG = LoggerFactory.getLogger(SequenceServer.class);
 	
 	public static final String SERVER_IDENTIFIER = 
 		String.format("H1/%s.%s", Version.release, Version.revision);

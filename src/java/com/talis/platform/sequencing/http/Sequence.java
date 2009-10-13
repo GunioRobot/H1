@@ -15,18 +15,18 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.talis.platform.sequencing.Clock;
 
-public class Sequencer extends Resource {
+public class Sequence extends Resource {
 	
-	private static final Logger LOG = LoggerFactory.getLogger(Sequencer.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Sequence.class);
 	public static final Variant VARIANT = new Variant(MediaType.TEXT_PLAIN);
 	
 	private final String myKey;
 	private Clock myClock;
 	
 	@Inject
-	public Sequencer(Context context, Request request, Response response) {
+	public Sequence(Context context, Request request, Response response) {
 		super(context, request, response);
-		SequencerServer.getInjector().injectMembers(this);
+		SequenceServer.getInjector().injectMembers(this);
 		getVariants().add(new Variant(MediaType.TEXT_PLAIN));
 		myKey = "/" + (String)getRequest().getAttributes().get("key");
 	}
@@ -50,7 +50,7 @@ public class Sequencer extends Resource {
     public void handlePost() {
     	Response response = getResponse();
     	response.getServerInfo()
-				.setAgent(SequencerServer.SERVER_IDENTIFIER);
+				.setAgent(SequenceServer.SERVER_IDENTIFIER);
     	Representation rep = represent(VARIANT);
         response.setEntity(rep);
     }

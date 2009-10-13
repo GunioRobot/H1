@@ -208,7 +208,7 @@
 	  <!-- Tests that require us to use the definalizer agent to convert final classes -->
       <path id="definalized.test.classes">
           <fileset dir="${build.test}">
-          	<include name="**/com/talis/platform/sequencing/http/SequencerTest.class"/>
+          	<include name="**/com/talis/platform/sequencing/http/SequenceTest.class"/>
           </fileset>
       </path>
 	
@@ -218,7 +218,7 @@
 	  	      <exclude name="**/*$*"/>
 	          <exclude name="**/com/talis/platform/sequencing/zookeeper/NullWatcher.class"/>
 	      	  <exclude name="**/com/talis/platform/sequencing/zookeeper/ZkTestHelper.class"/>
-	      	  <exclude name="**/com/talis/platform/sequencing/http/SequencerTest.class"/>
+	      	  <exclude name="**/com/talis/platform/sequencing/http/SequenceTest.class"/>
 	  	  </fileset>
 	  </path>
 	

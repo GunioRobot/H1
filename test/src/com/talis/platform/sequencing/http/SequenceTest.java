@@ -26,7 +26,7 @@ import org.restlet.resource.StringRepresentation;
 import com.talis.platform.sequencing.Clock;
 import com.talis.platform.sequencing.SequencingException;
 
-public class SequencerTest {
+public class SequenceTest {
 
 	private Context context;
 	private Request request;
@@ -47,37 +47,36 @@ public class SequencerTest {
 		replay(request);
 		
 		serverInfo = createStrictMock(ServerInfo.class);
-		serverInfo.setAgent(SequencerServer.SERVER_IDENTIFIER);
+		serverInfo.setAgent(SequenceServer.SERVER_IDENTIFIER);
 		replay(serverInfo);
-
 	}
 	
 	@Test
     public void putIsNotAnAllowedMethod(){
-	   Sequencer myResource = new Sequencer(context, request, 
+	   Sequence resource = new Sequence(context, request, 
 			   								createNiceMock(Response.class));
-       assertFalse(myResource.allowPut());
+       assertFalse(resource.allowPut());
     }
         
     @Test
     public void deleteIsNotAnAllowedMethod(){
-    	Sequencer myResource = new Sequencer(context, request, 
+    	Sequence resource = new Sequence(context, request, 
 			   								createNiceMock(Response.class));
-        assertFalse(myResource.allowDelete());
+        assertFalse(resource.allowDelete());
     }
     
     @Test
     public void getIsNotAnAllowedMethod(){
-    	Sequencer myResource = new Sequencer(context, request, 
+    	Sequence resource = new Sequence(context, request, 
 			   								createNiceMock(Response.class));
-        assertFalse(myResource.allowGet());
+        assertFalse(resource.allowGet());
     }
 
     @Test
     public void postIsAnAllowedMethod(){
-    	Sequencer myResource = new Sequencer(context, request, 
+    	Sequence resource = new Sequence(context, request, 
 			   								createNiceMock(Response.class));
-        assertTrue(myResource.allowPost());
+        assertTrue(resource.allowPost());
     }
 	
 	@Test
@@ -93,7 +92,7 @@ public class SequencerTest {
         					new StringRepresentation("999") ) ) ;
         replay(response);
 
-		Sequencer resource = new Sequencer(context, request, response);
+		Sequence resource = new Sequence(context, request, response);
 		resource.setClock(clock);
 		resource.handlePost();
 		
@@ -115,7 +114,7 @@ public class SequencerTest {
         					new StringRepresentation("BANG!") ) ) ;
         replay(response);
 
-		Sequencer resource = new Sequencer(context, request, response);
+		Sequence resource = new Sequence(context, request, response);
 		resource.setClock(clock);
 		resource.handlePost();
 		

@@ -13,7 +13,7 @@ public class SequencingApplication extends Application{
     private static final Logger LOG = LoggerFactory.getLogger(SequencingApplication.class);
 
     public static enum ROUTE{
-        SEQUENCE ("/seq/{key}", Sequencer.class);
+        SEQUENCE ("/seq/{key}", Sequence.class);
 
         public final String uriPattern;
         public final Class< ? extends Resource> resource;
