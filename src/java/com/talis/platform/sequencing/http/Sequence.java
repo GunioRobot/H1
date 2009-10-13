@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.talis.platform.sequencing.Clock;
+import com.talis.platform.sequencing.metrics.NullSequencingMetrics;
+import com.talis.platform.sequencing.metrics.SequencingMetrics;
 
 public class Sequence extends Resource {
 	
@@ -22,10 +24,12 @@ public class Sequence extends Resource {
 	
 	private final String myKey;
 	private Clock myClock;
+	private SequencingMetrics myMetrics;
 	
 	@Inject
 	public Sequence(Context context, Request request, Response response) {
 		super(context, request, response);
+		myMetrics = new NullSequencingMetrics();
 		SequenceServer.getInjector().injectMembers(this);
 		getVariants().add(new Variant(MediaType.TEXT_PLAIN));
 		myKey = "/" + (String)getRequest().getAttributes().get("key");
@@ -35,6 +39,11 @@ public class Sequence extends Resource {
     public void setClock(Clock clock){
         myClock = clock;
     }
+	
+	@Inject
+	public void setMetrics(SequencingMetrics metrics){
+		myMetrics = metrics;
+	}
 
 	@Override
     public boolean allowGet() {
@@ -70,6 +79,7 @@ public class Sequence extends Resource {
 										myKey, sequence));
 			}
 			
+			myMetrics.incrementSequencesGenerated();
 			return new StringRepresentation(sequence.toString(), 
 											MediaType.TEXT_PLAIN);
 		} catch (Exception e) {

@@ -43,55 +43,9 @@
 			<attribute name="ThreadCount" type="int16" />
 			<attribute name="DaemonThreadCount" type="int16" />
 		</mbean>
-		<!-- 
-		<mbean name="com.talis:name=MajatNodeMetrics1" pname="Majat">
-			<attribute name="NeighbourListChurn"
-				pname="Neighbour_Churn" type="int32" units="nodes" group="Neighbour List" />
-			<attribute name="NeighboursAdded"
-				pname="Neighbours_Added" type="int32" units="nodes" group="Neighbour List" />
-            <attribute name="NeighbourListSize"
-                pname="Neighbour_List_Size" type="int32" units="nodes" group="Neighbour List" />
-            <attribute name="ZombieListSize"
-                pname="Zombie_List_Size" type="int32" units="nodes" group="Neighbour List" />
-			<attribute name="FindANeighbourMessagesReceived"
-				pname="Find_A_Neighbour_Received" type="int32" units="messages" group="Messages" />
-			<attribute name="HeartbeatMessagesReceived"
-				pname="Heartbeat_Received" type="int32" units="messages" group="Messages" />
-			<attribute name="NeighbourNotificationMessagesReceived"
-				pname="Neighbour_Notification_Received" type="int32" units="messages" group="Messages" />
-			<attribute name="UpdateAttributeMessagesReceived"
-				pname="Update_Received" type="int32" units="messages" group="Messages" />
-		    <attribute name="UpdateBucketContentMessagesReceived"
-                pname="Update_Bucket_Received" type="int32" units="messages" group="Messages" />
-			<attribute name="FindANeighbourMessagesSent"
-				pname="Find_A_Neighbour_Sent" type="int32" units="messages" group="Messages" />
-			<attribute name="HeartbeatMessagesSent"
-				pname="Heartbeat_Sent" type="int32" units="messages" group="Messages" />
-			<attribute name="NeighbourNotificationMessagesSent"
-				pname="Neighbour_Notification_Sent" type="int32" units="messages" group="Messages" />
-			<attribute name="UpdateAttributeMessagesSent"
-				pname="Update_Sent" type="int32" units="messages" group="Messages" />
-		    <attribute name="UpdateBucketContentMessagesSent"
-                pname="Update_Bucket_Sent" type="int32" units="messages" group="Messages" />
-			<attribute name="FindANeighbourMessagesCorrupt"
-				pname="Find_A_Neighbour_Corrupt" type="int32" units="messages" group="Message Errors" />
-			<attribute name="HeartbeatMessagesCorrupt"
-				pname="Heartbeat_Corrupt" type="int32" units="messages" group="Message Errors" />
-			<attribute name="NeighbourNotificationMessagesCorrupt"
-				pname="Neighbour_Notification_Corrupt" type="int32" units="messages" group="Message Errors" />
-			<attribute name="UpdateAttributeMessagesCorrupt"
-				pname="Update_Corrupt" type="int32" units="messages" group="Message Errors" />
-			<attribute name="UpdateBucketContentMessagesCorrupt"
-                pname="Update_Bucket_Corrupt" type="int32" units="messages" group="Message Errors" />
-			<attribute name="UpdateAttributeDuplicateMessages"
-				pname="Update_Duplicate" type="int32" units="messages" group="Messages" />
-			<attribute name="UpdateBucketContentDuplicateMessages"
-                pname="Update_Bucket_Duplicate" type="int32" units="messages" group="Messages" />
-			<attribute name="MessageErrors"
-				pname="Message_Errors" type="int32" units="messages" group="Message Errors" />
-		    <attribute name="UpdateRdfBucketContentErrors"
-                pname="Update_Rdf_Bucket_Content_Errors" type="int32" units="errors" group="Message Errors" />
+		<mbean name="com.talis:name=SequencingMetrics0" pname="H1">
+			<attribute name="SequencesGenerated"
+				pname="Sequences_Generated" type="int32" units="sequences" group="Base" />
 		</mbean>
-		-->
 	</sample>
 </jmxetric-config>

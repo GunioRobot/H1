@@ -1,6 +1,5 @@
 package com.talis.platform.sequencing.http;
 
-
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.Router;
@@ -17,7 +16,7 @@ public class SequencingApplication extends Application{
 
         public final String uriPattern;
         public final Class< ? extends Resource> resource;
-        ROUTE(String uriPattern, Class < ? extends Resource> resource){
+        ROUTE(final String uriPattern, final Class < ? extends Resource> resource){
             this.uriPattern = uriPattern;
             this.resource = resource;
         }
@@ -30,7 +29,7 @@ public class SequencingApplication extends Application{
     
     @Override
     public Restlet createRoot() {
-        Router router = new Router(getContext());
+        final Router router = new Router(getContext());
         router.attach(ROUTE.SEQUENCE.uriPattern, ROUTE.SEQUENCE.resource);
         return router;
     }

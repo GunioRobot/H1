@@ -34,9 +34,9 @@ public class ZkClock implements Clock {
 	private final int retryCount = Integer.getInteger(RETRY_COUNT_PROPERTY, 10);
 
 	@Inject
-	public ZkClock(ZooKeeperProvider zooKeeperProvider) throws SequencingException {
+	public ZkClock(ZooKeeper zooKeeper) throws SequencingException {
 		LOG.info("Initialising ZooKeeper backed Clock instance");
-		myZooKeeper = zooKeeperProvider.get();
+		myZooKeeper = zooKeeper;
 	}
 
 	@Override
