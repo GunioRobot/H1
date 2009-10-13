@@ -12,6 +12,7 @@
         <dependency org="commons-codec" name="commons-codec" rev="1.3" />
         <dependency org="commons-io" name="commons-io" rev="1.4" />
         <dependency org="log4j" name="log4j" rev="1.2.14" />
+        <dependency org="aopalliance" name="aopalliance" rev="1.0" />
         <dependency org="com.google.code.guice" name="guice" rev="2.0" />
         <dependency org="com.google.code.guice" name="guice-throwingproviders" rev="2.0" />
         <dependency org="jargs" name="jargs" rev="1.0" />
@@ -20,11 +21,11 @@
         <dependency org="com.noelios.restlet" name="com.noelios.restlet" rev="1.1.4" />
         <dependency org="com.noelios.restlet" name="com.noelios.restlet.ext.simple" rev="1.1.4" />
         <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.5.6"/>
-        <dependency org="org.apache" name="zookeeper" rev="3.2.0"/>
+        <dependency org="org.apache" name="zookeeper" rev="3.2.1"/>
        
         <!-- jars only used for build -->
 	    <dependency org="junit" name="junit" rev="4.5" conf="build->default"/>
-		<dependency org="cobertura" name="cobertura" rev="1.9rc1" conf="cobertura->default"/>
+		<dependency org="net.sourceforge.cobertura" name="cobertura" rev="1.9.2" conf="cobertura->default"/>
         <dependency org="org.apache.ant" name="ant" rev="1.7.0" conf="build->default"/>
         <dependency org="pmd" name="pmd" rev="4.2.3" conf="pmd->default"/>
         <dependency org="org.easymock" name="easymockclassextension" rev="2.4" conf="build->default"/>

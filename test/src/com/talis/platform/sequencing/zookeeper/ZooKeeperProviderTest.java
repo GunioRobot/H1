@@ -48,7 +48,7 @@ public class ZooKeeperProviderTest {
 
 	@Test
 	public void readServerListFromDefaultLocation() throws Exception{
-		ZooKeeperProvider provider = new ZooKeeperProvider();
+		RealZooKeeperProvider provider = new RealZooKeeperProvider();
 		assertEquals(DEFAULT_HOST_PORT, provider.getEnsembleList());
 	}
 		
@@ -66,7 +66,7 @@ public class ZooKeeperProviderTest {
 		System.setProperty(ZooKeeperProvider.SERVER_LIST_LOCATION_PROPERTY, 
 							tmpFile.getAbsolutePath());
 		try{
-			ZooKeeperProvider provider = new ZooKeeperProvider();
+			RealZooKeeperProvider provider = new RealZooKeeperProvider();
 			assertEquals(expected, provider.getEnsembleList());
 		}finally{
 			System.clearProperty(ZooKeeperProvider.SERVER_LIST_LOCATION_PROPERTY);
@@ -78,7 +78,7 @@ public class ZooKeeperProviderTest {
 		System.setProperty(ZooKeeperProvider.SERVER_LIST_LOCATION_PROPERTY,
 				"/this/doesnt/exist");
 		try {
-			ZooKeeperProvider provider = new ZooKeeperProvider();
+			RealZooKeeperProvider provider = new RealZooKeeperProvider();
 			provider.get();
 			fail("Expected an exception here");
 		} finally {
@@ -88,15 +88,15 @@ public class ZooKeeperProviderTest {
 	
 	@Test
 	public void reuseZooKeeperClientInstance() throws SequencingException{
-		ZooKeeperProvider provider = new ZooKeeperProvider();
+		ZooKeeperProvider provider = new RealZooKeeperProvider();
 		assertSame(provider.get(), provider.get());
 	}
 	
 	@Test
 	public void resetDisposesOfZookeeperClientInstance() 
 	throws Exception{
-		ZooKeeperProvider provider = new ZooKeeperProvider();
-		ZooKeeper first = provider.get();
+		RealZooKeeperProvider provider = new RealZooKeeperProvider();
+				ZooKeeper first = provider.get();
 		provider.reset();
 		ZooKeeper second = provider.get();
 		assertNotSame(first, second);
@@ -106,7 +106,7 @@ public class ZooKeeperProviderTest {
 	public void waitForConnectedEventBeforeReturningInstance()
 	throws Exception{
 		ensureServerStopped(DEFAULT_HOST_PORT);
-		final ZooKeeperProvider provider = new ZooKeeperProvider();
+		final RealZooKeeperProvider provider = new RealZooKeeperProvider();
 		final long waitPeriod = 300; 
 		class Tuple{
 			long time1;
@@ -149,7 +149,7 @@ public class ZooKeeperProviderTest {
 	public void ifNoConnectedEventReceivedDuringMaxWaitPeriodThrowException(){
 		ensureServerStopped(DEFAULT_HOST_PORT);
 		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "100");
-		final ZooKeeperProvider provider = new ZooKeeperProvider();
+		final ZooKeeperProvider provider = new RealZooKeeperProvider();
 		try {
   	  		Executors.newSingleThreadScheduledExecutor().submit(
   	  			new Callable<Void>(){
@@ -172,7 +172,7 @@ public class ZooKeeperProviderTest {
 	@Test
 	public void ifExpiredEventReceivedDisposeOfInstance() throws Exception{
 		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "100");
-		final ZooKeeperProvider provider = new ZooKeeperProvider();
+		final RealZooKeeperProvider provider = new RealZooKeeperProvider();
 		ZooKeeper first = provider.get();
 		WatchedEvent sessionExpiredEvent = 
 			new WatchedEvent(Watcher.Event.EventType.None, 
