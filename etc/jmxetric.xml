@@ -44,8 +44,10 @@
 			<attribute name="DaemonThreadCount" type="int16" />
 		</mbean>
 		<mbean name="com.talis:name=SequencingMetrics0" pname="H1">
-			<attribute name="SequencesGenerated"
-				pname="Sequences_Generated" type="int32" units="sequences" group="Base" />
+			<attribute name="WriteSequenceOperations"
+				pname="Write_Sequence_Operations" type="int32" units="sequences" group="Base" />
+			<attribute name="AverageWriteSequenceLatency"
+                pname="Average_Write_Sequence_Latency" type="int32" units="ms" group="Base" />
 		</mbean>
 	</sample>
 </jmxetric-config>

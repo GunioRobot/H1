@@ -2,6 +2,6 @@ package com.talis.platform.sequencing.metrics;
 
 public interface SequencingMetricsJmxMBean {
 
-	public int getSequencesGenerated();
-	
+	public int getWriteSequenceOperations();
+	public long getAverageWriteSequenceLatency();
 }

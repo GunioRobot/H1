@@ -2,5 +2,5 @@ package com.talis.platform.sequencing.metrics;
 
 public interface SequencingMetrics {
 
-	public void incrementSequencesGenerated();
+	public void recordSequenceWriteLatency(long latency);
 }

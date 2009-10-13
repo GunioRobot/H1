@@ -72,14 +72,15 @@ public class Sequence extends Resource {
 										myKey));
 			}
 			
+			long start = System.currentTimeMillis();
 			Long sequence = myClock.getNextSequence(myKey);
-			
+			long end = System.currentTimeMillis();
+			myMetrics.recordSequenceWriteLatency(end - start);
 			if (LOG.isDebugEnabled()){
 				LOG.debug(String.format("Next sequence for key %s is %s",  
 										myKey, sequence));
 			}
 			
-			myMetrics.incrementSequencesGenerated();
 			return new StringRepresentation(sequence.toString(), 
 											MediaType.TEXT_PLAIN);
 		} catch (Exception e) {

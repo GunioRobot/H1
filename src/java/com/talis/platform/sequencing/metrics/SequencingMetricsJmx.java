@@ -1,6 +1,8 @@
 package com.talis.platform.sequencing.metrics;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -22,24 +24,45 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 			NotCompliantMBeanException, NullPointerException, IOException {
 		super();
 	}
-
-	private int sequencesGenerated = 0;
 	
 	@Override
 	public String getBeanName() {
 		return "com.talis:name=SequencingMetrics";
 	}
 
-	@Override
-	public void incrementSequencesGenerated() {
-		sequencesGenerated++;
+	private AtomicInteger writeSequenceOperations = new AtomicInteger(0);
+	public void incrementWriteSequenceOperations() {
+		writeSequenceOperations.incrementAndGet();
 	}
 
 	@Override
-	public int getSequencesGenerated() {
-		int valueToReturn = sequencesGenerated;
-		sequencesGenerated = 0;
+	public int getWriteSequenceOperations() {
+		int valueToReturn = writeSequenceOperations.get();
+		writeSequenceOperations.set(0);
 		return valueToReturn;
+	}
+
+	private AtomicLong writeSequenceLatencyTotal = new AtomicLong(0);
+	private AtomicInteger writeSequenceLatencySample = new AtomicInteger(0);
+	
+	@Override
+	public long getAverageWriteSequenceLatency() {
+		long averageWriteLatency = 0;
+		if (writeSequenceLatencySample.get() > 0){
+			averageWriteLatency = 
+				writeSequenceLatencyTotal.get() / writeSequenceLatencySample.get();
+			writeSequenceLatencySample.set(0);
+			writeSequenceLatencyTotal.set(0);
+		}
+		
+		return averageWriteLatency;
+	}
+
+	@Override
+	public void recordSequenceWriteLatency(long latency) {
+		incrementWriteSequenceOperations();
+		writeSequenceLatencySample.incrementAndGet();
+		writeSequenceLatencyTotal.addAndGet(latency);
 	}
 
 }
