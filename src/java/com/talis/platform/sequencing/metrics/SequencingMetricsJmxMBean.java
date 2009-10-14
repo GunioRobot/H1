@@ -4,4 +4,6 @@ public interface SequencingMetricsJmxMBean {
 
 	public int getWriteSequenceOperations();
 	public long getAverageWriteSequenceLatency();
+	public long getMinWriteSequenceLatency();
+	public long getMaxWriteSequenceLatency();
 }

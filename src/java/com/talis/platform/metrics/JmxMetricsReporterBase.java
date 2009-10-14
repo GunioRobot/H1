@@ -5,6 +5,7 @@ import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -36,9 +37,16 @@ public abstract class JmxMetricsReporterBase {
     protected static JMXConnectorServer jmxConnectorServer;
     protected static volatile boolean JMX_CONNECTOR_STARTED = false;
     
-    private static int instanceCount = 0;
-    public static int getInstanceCount() {
-        return instanceCount;
+    private static Map<Class<? extends JmxMetricsReporterBase>, Integer> INSTANCE_COUNTS;
+    static {
+    	INSTANCE_COUNTS = new HashMap<Class<? extends JmxMetricsReporterBase>, Integer>();
+    }
+    public static int getInstanceCountForClass(Class<? extends JmxMetricsReporterBase> clazz){
+    	if (INSTANCE_COUNTS.containsKey(clazz)){
+    		return INSTANCE_COUNTS.get(clazz);
+    	}else{
+    		return 0;
+    	}
     }
     
     public abstract String getBeanName();
@@ -49,8 +57,13 @@ public abstract class JmxMetricsReporterBase {
     							           NotCompliantMBeanException, 
     							           NullPointerException, 
     							           IOException {
+    	int currentInstanceCountForClass = 0;
+    	if (INSTANCE_COUNTS.containsKey(getClass())){
+    		currentInstanceCountForClass = INSTANCE_COUNTS.get(getClass());
+    	}
     	
-        ObjectName objectName = new ObjectName(getBeanName() + instanceCount++);
+    	INSTANCE_COUNTS.put(getClass(), ++currentInstanceCountForClass);
+        ObjectName objectName = new ObjectName(getBeanName() + currentInstanceCountForClass);
 
         MBeanServer platformServer = 
             ManagementFactory.getPlatformMBeanServer();

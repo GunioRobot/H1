@@ -6,13 +6,10 @@ import org.restlet.data.Protocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import com.talis.platform.NullInjector;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
-import com.talis.platform.sequencing.metrics.SequencingMetricsJmx;
 import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 
 public class SequenceServer {
@@ -27,17 +24,7 @@ public class SequenceServer {
 
 	public static Injector initInjector(){
 		return Guice.createInjector(
-				new ZooKeeperModule(),
-				new AbstractModule(){
-					@Override
-					protected void configure() {
-						bind(SequencingMetricsJmx.class)
-							.in(Scopes.SINGLETON);
-						bind(SequencingMetrics.class)
-							.to(SequencingMetricsJmx.class)
-							.in(Scopes.SINGLETON);
-					}
-				});
+				new ZooKeeperModule());
 	}
 	
 	public static void main(String[] args) {

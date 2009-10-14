@@ -9,15 +9,16 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.talis.platform.metrics.JmxMetricsReporterBase;
 
 public class SequencingMetricsJmx extends JmxMetricsReporterBase 
 implements SequencingMetrics, SequencingMetricsJmxMBean {
 
-	private static final Log LOG = LogFactory.getLog(SequencingMetricsJmx.class);
+	private final AtomicInteger writeSequenceOperations = new AtomicInteger(0);
+	private final AtomicLong writeSequenceLatencyTotal = new AtomicLong(0);
+	private final AtomicLong writeSequenceLatencyMin = new AtomicLong(Long.MAX_VALUE);
+	private final AtomicLong writeSequenceLatencyMax = new AtomicLong(0);
+	private final AtomicInteger writeSequenceLatencySample = new AtomicInteger(0);
 	
 	public SequencingMetricsJmx() throws MalformedObjectNameException,
 			InstanceAlreadyExistsException, MBeanRegistrationException,
@@ -29,12 +30,7 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	public String getBeanName() {
 		return "com.talis:name=SequencingMetrics";
 	}
-
-	private AtomicInteger writeSequenceOperations = new AtomicInteger(0);
-	public void incrementWriteSequenceOperations() {
-		writeSequenceOperations.incrementAndGet();
-	}
-
+	
 	@Override
 	public int getWriteSequenceOperations() {
 		int valueToReturn = writeSequenceOperations.get();
@@ -42,9 +38,6 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 		return valueToReturn;
 	}
 
-	private AtomicLong writeSequenceLatencyTotal = new AtomicLong(0);
-	private AtomicInteger writeSequenceLatencySample = new AtomicInteger(0);
-	
 	@Override
 	public long getAverageWriteSequenceLatency() {
 		long averageWriteLatency = 0;
@@ -54,15 +47,42 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 			writeSequenceLatencySample.set(0);
 			writeSequenceLatencyTotal.set(0);
 		}
-		
 		return averageWriteLatency;
 	}
 
 	@Override
 	public void recordSequenceWriteLatency(long latency) {
-		incrementWriteSequenceOperations();
+		writeSequenceOperations.incrementAndGet();
 		writeSequenceLatencySample.incrementAndGet();
 		writeSequenceLatencyTotal.addAndGet(latency);
+		if (latency < writeSequenceLatencyMin.get()){
+			writeSequenceLatencyMin.set(latency);
+		}
+		if (latency > writeSequenceLatencyMax.get()){
+			writeSequenceLatencyMax.set(latency);
+		}
 	}
+	
+	@Override
+	public long getMaxWriteSequenceLatency() {
+		long valueToReturn = writeSequenceLatencyMax.get();
+		writeSequenceLatencyMax.set(0);
+		return valueToReturn;
+	}
+
+	@Override
+	public long getMinWriteSequenceLatency() {
+		long valueToReturn = writeSequenceLatencyMin.get();
+		writeSequenceLatencyMin.set(Long.MAX_VALUE);
+		return valueToReturn;
+	}
+
+	@Override
+	public void incrementErrorResponses() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
 
 }

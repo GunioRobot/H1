@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.talis.platform.sequencing.Clock;
 import com.talis.platform.sequencing.SequencingException;
+import com.talis.platform.sequencing.zookeeper.metrics.ZooKeeperMetrics;
 
 public class ZkClock implements Clock {
 
@@ -29,14 +30,17 @@ public class ZkClock implements Clock {
 	public static final String RETRY_COUNT_PROPERTY = 
 			"com.talis.platform.sequencing.zookeeper.retrycount";
 
-	private ZooKeeper myZooKeeper;
+	private final ZooKeeper myZooKeeper;
+	private final ZooKeeperMetrics myMetrics;
+	
 	private final long retryDelay = Long.getLong(RETRY_DELAY_PROPERTY, 100l);
 	private final int retryCount = Integer.getInteger(RETRY_COUNT_PROPERTY, 10);
 
 	@Inject
-	public ZkClock(ZooKeeper zooKeeper) throws SequencingException {
+	public ZkClock(ZooKeeper zooKeeper, ZooKeeperMetrics metrics) throws SequencingException {
 		LOG.info("Initialising ZooKeeper backed Clock instance");
 		myZooKeeper = zooKeeper;
+		myMetrics = metrics;
 	}
 
 	@Override
@@ -85,6 +89,7 @@ public class ZkClock implements Clock {
 				createKey(key);
 				committed = false;
 			} catch (KeeperException.BadVersionException e) {
+				myMetrics.incrementKeyCollisions();
 				LOG.debug(String.format(
 						"Another client updated key %s, retrying", key));
 				committed = false;

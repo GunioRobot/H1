@@ -219,6 +219,7 @@
 	          <exclude name="**/com/talis/platform/sequencing/zookeeper/NullWatcher.class"/>
 	      	  <exclude name="**/com/talis/platform/sequencing/zookeeper/ZkTestHelper.class"/>
 	      	  <exclude name="**/com/talis/platform/sequencing/http/SequenceTest.class"/>
+	      	  <exclude name="**/com/talis/platform/metrics/JmxMetricsReporterBaseTest*"/>
 	  	  </fileset>
 	  </path>
 	

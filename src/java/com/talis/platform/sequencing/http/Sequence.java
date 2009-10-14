@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
+import com.talis.platform.SystemTimestampProvider;
+import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.Clock;
 import com.talis.platform.sequencing.metrics.NullSequencingMetrics;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
@@ -25,11 +27,14 @@ public class Sequence extends Resource {
 	private final String myKey;
 	private Clock myClock;
 	private SequencingMetrics myMetrics;
+	private TimestampProvider myTimestampProvider;
 	
 	@Inject
 	public Sequence(Context context, Request request, Response response) {
 		super(context, request, response);
 		myMetrics = new NullSequencingMetrics();
+		myTimestampProvider = new SystemTimestampProvider();
+		
 		SequenceServer.getInjector().injectMembers(this);
 		getVariants().add(new Variant(MediaType.TEXT_PLAIN));
 		myKey = "/" + (String)getRequest().getAttributes().get("key");
@@ -39,6 +44,11 @@ public class Sequence extends Resource {
     public void setClock(Clock clock){
         myClock = clock;
     }
+	
+	@Inject
+	public void setTimestampProvider(TimestampProvider provider){
+		myTimestampProvider = provider;
+	}
 	
 	@Inject
 	public void setMetrics(SequencingMetrics metrics){
@@ -72,10 +82,11 @@ public class Sequence extends Resource {
 										myKey));
 			}
 			
-			long start = System.currentTimeMillis();
+			long start = myTimestampProvider.getCurrentTimeInMillis();
 			Long sequence = myClock.getNextSequence(myKey);
-			long end = System.currentTimeMillis();
+			long end = myTimestampProvider.getCurrentTimeInMillis();
 			myMetrics.recordSequenceWriteLatency(end - start);
+			
 			if (LOG.isDebugEnabled()){
 				LOG.debug(String.format("Next sequence for key %s is %s",  
 										myKey, sequence));
@@ -84,7 +95,10 @@ public class Sequence extends Resource {
 			return new StringRepresentation(sequence.toString(), 
 											MediaType.TEXT_PLAIN);
 		} catch (Exception e) {
-			LOG.error("ERROR", e);
+			myMetrics.incrementErrorResponses();
+			LOG.error(
+				String.format("Clock errored when incrementing sequence for key %s", 
+								myKey), e);
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, 
 									"Internal Error");
 			return new StringRepresentation(e.getMessage(), 
