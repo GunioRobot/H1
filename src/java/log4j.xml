@@ -8,6 +8,13 @@
       </layout>
     </appender>
     
+    <appender name="fileout" class="org.apache.log4j.FileAppender"> 
+        <param name="File" value="/var/log/h1.log"/> 
+        <layout class="org.apache.log4j.PatternLayout"> 
+            <param name="ConversionPattern" value="%d{ISO8601} -%5p %-25c{1} :%t:%m%n"/> 
+        </layout> 
+    </appender>
+    
     <appender name="stdout" class="org.apache.log4j.ConsoleAppender"> 
         <layout class="org.apache.log4j.PatternLayout"> 
             <param name="ConversionPattern" value="%d{ISO8601} -%5p %-25c{1} :%t:%m%n"/>
@@ -15,12 +22,9 @@
     </appender>
     
     <logger name="com.talis">
-        <level value="debug"/> 
+        <level value="warn"/> 
     </logger> 
-    <logger name="org.apache.zookeeper.server">
-        <level value="error"/> 
-    </logger>
-    
+
     <root> 
         <level value="warn"/>
         <appender-ref ref="stdout" /> 

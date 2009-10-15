@@ -152,7 +152,7 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 					getEnsembleList(), sessionTimeout));
 		}
 		connected = false;
-		ZooKeeper keeper = new ZooKeeper(myEnsembleList, sessionTimeout, this);
+		ZooKeeper keeper = new ZooKeeper(getEnsembleList(), sessionTimeout, this);
 
 		if (LOG.isInfoEnabled()) {
 			LOG.info("Created ZooKeeper instance");
