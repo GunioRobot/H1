@@ -16,7 +16,7 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 
 	private final AtomicInteger writeSequenceOperations = new AtomicInteger(0);
 	private final AtomicLong writeSequenceLatencyTotal = new AtomicLong(0);
-	private final AtomicLong writeSequenceLatencyMin = new AtomicLong(Long.MAX_VALUE);
+	private final AtomicLong writeSequenceLatencyMin = new AtomicLong(0);
 	private final AtomicLong writeSequenceLatencyMax = new AtomicLong(0);
 	private final AtomicInteger writeSequenceLatencySample = new AtomicInteger(0);
 	
@@ -55,7 +55,8 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 		writeSequenceOperations.incrementAndGet();
 		writeSequenceLatencySample.incrementAndGet();
 		writeSequenceLatencyTotal.addAndGet(latency);
-		if (latency < writeSequenceLatencyMin.get()){
+		if (latency < writeSequenceLatencyMin.get()  
+			|| writeSequenceLatencyMin.get() == 0 ){
 			writeSequenceLatencyMin.set(latency);
 		}
 		if (latency > writeSequenceLatencyMax.get()){
@@ -73,14 +74,21 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	@Override
 	public long getMinWriteSequenceLatency() {
 		long valueToReturn = writeSequenceLatencyMin.get();
-		writeSequenceLatencyMin.set(Long.MAX_VALUE);
+		writeSequenceLatencyMin.set(0);
 		return valueToReturn;
 	}
 
+	private final AtomicInteger errorResponses = new AtomicInteger(0);
 	@Override
 	public void incrementErrorResponses() {
-		// TODO Auto-generated method stub
-		
+		errorResponses.incrementAndGet();
+	}
+	
+	@Override
+	public int getErrorResponseCount() {
+		int valueToReturn = errorResponses.get();
+		errorResponses.set(0);
+		return valueToReturn;
 	}
 
 	

@@ -13,7 +13,6 @@ import com.talis.platform.sequencing.metrics.SequencingMetricsJmx;
 public class ZooKeeperMetricsJmx extends SequencingMetricsJmx 
 implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 
-	private final AtomicInteger keyCollisions = new AtomicInteger(0);
 	
 	public ZooKeeperMetricsJmx() throws MalformedObjectNameException,
 			InstanceAlreadyExistsException, MBeanRegistrationException,
@@ -26,6 +25,7 @@ implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 		return "com.talis:name=ZkSequencingMetrics";
 	};
 	
+	private final AtomicInteger keyCollisions = new AtomicInteger(0);
 	@Override
 	public void incrementKeyCollisions() {
 		keyCollisions.incrementAndGet();
@@ -37,65 +37,75 @@ implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 		keyCollisions.set(0);
 		return valueToReturn;
 	}
-
-	@Override
-	public void incrementConnectionLossEvents() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void incrementExpiredSessionEvents() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void incrementInterruptedExceptions() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void incrementKeeperExceptions() {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
+	private final AtomicInteger keyCreations = new AtomicInteger(0);
 	@Override
 	public void incrementKeyCreations() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public int getConnectionLossEvents() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int getInterruptedExceptions() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int getKeeperExceptions() {
-		// TODO Auto-generated method stub
-		return 0;
+		keyCreations.incrementAndGet();
 	}
 
 	@Override
 	public int getKeyCreations() {
-		// TODO Auto-generated method stub
-		return 0;
+		int valueToReturn = keyCreations.get();
+		keyCreations.set(0);
+		return valueToReturn;
+	}
+
+
+	private final AtomicInteger connectionLossEvents = new AtomicInteger(0);
+	@Override
+	public void incrementConnectionLossEvents() {
+		connectionLossEvents.incrementAndGet();
+		keeperExceptions.incrementAndGet();
+	}
+
+	@Override
+	public int getConnectionLossEvents() {
+		int valueToReturn = connectionLossEvents.get();
+		connectionLossEvents.set(0);
+		return valueToReturn;
+	}
+
+	private final AtomicInteger sessionExpiredEvents = new AtomicInteger(0);
+	@Override
+	public void incrementSessionExpiredEvents() {
+		sessionExpiredEvents.incrementAndGet();
+		keeperExceptions.incrementAndGet();
 	}
 
 	@Override
 	public int getSessionExpiredEvents() {
-		// TODO Auto-generated method stub
-		return 0;
+		int valueToReturn = sessionExpiredEvents.get();
+		sessionExpiredEvents.set(0);
+		return valueToReturn;
 	}
+
+	private final AtomicInteger interruptedExceptions = new AtomicInteger(0);
+	@Override
+	public void incrementInterruptedExceptions() {
+		interruptedExceptions.incrementAndGet();
+	}
+	
+	@Override
+	public int getInterruptedExceptions() {
+		int valueToReturn = interruptedExceptions.get();
+		interruptedExceptions.set(0);
+		return valueToReturn;
+	}
+
+	private final AtomicInteger keeperExceptions = new AtomicInteger(0);
+	@Override
+	public void incrementKeeperExceptions() {
+		keeperExceptions.incrementAndGet();
+	}
+	
+	@Override
+	public int getKeeperExceptions() {
+		int valueToReturn = keeperExceptions.get();
+		keeperExceptions.set(0);
+		return valueToReturn;
+	}
+
+
 	
 }

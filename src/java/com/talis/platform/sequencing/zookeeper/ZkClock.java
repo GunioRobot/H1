@@ -48,19 +48,21 @@ public class ZkClock implements Clock {
 		KeeperException mostRecentException = null;
 
 		for (int i = 0; i < retryCount; i++) {
-
 			try {
 				return getAndIncrement(key);
 			} catch (KeeperException.SessionExpiredException e) {
+				myMetrics.incrementSessionExpiredEvents();
 				LOG.warn("Session expired for: " + myZooKeeper
 						+ " so reconnecting due to: " + e, e);
 				throw new SequencingException("Session expired", e);
 			} catch (KeeperException.ConnectionLossException e) {
+				myMetrics.incrementConnectionLossEvents();
 				mostRecentException = e;
 				LOG.debug("Attempt " + i + " failed with connection loss so "
 						+ "attempting to reconnect: " + e, e);
 				retryWithDelay(i);
 			} catch (KeeperException e) {
+				myMetrics.incrementKeeperExceptions();
 				LOG.error(String.format("Caught an unexpected error when "
 						+ "incrementing sequence for key %s", key), e);
 				mostRecentException = e;
@@ -99,6 +101,7 @@ public class ZkClock implements Clock {
 				// didn't. In the worst case, we'll end up with a wasted
 				// sequence number that we'll have to apply compensating
 				// measures to deal with
+				myMetrics.incrementInterruptedExceptions();
 				LOG.error(String.format(
 						"Unable to determine status counter increment for key %s. "
 								+ "This may result in unused sequences", key),
@@ -115,7 +118,9 @@ public class ZkClock implements Clock {
 		try {
 			myZooKeeper.create(key, DEFAULT_DATA,
 								DEFAULT_ACL, CreateMode.PERSISTENT);
+			myMetrics.incrementKeyCreations();
 		} catch (InterruptedException e) {
+			myMetrics.incrementInterruptedExceptions();
 			LOG.error(String.format(
 							"Caught InterruptedException when creating key %s",
 							key), e);
@@ -125,6 +130,7 @@ public class ZkClock implements Clock {
 						"Tried to create %s, but it already exists. "
 								+ "Probably a (harmless) race condition", key));
 			} else {
+				myMetrics.incrementKeeperExceptions();
 				throw e;
 			}
 		}

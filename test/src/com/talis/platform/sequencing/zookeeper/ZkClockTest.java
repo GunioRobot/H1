@@ -78,6 +78,18 @@ public class ZkClockTest {
 		assertEquals(sequence, getNodeDataAsLong(key));
 	}
 	
+	@Test
+	public void reportKeyCreationsViaMetricsObject() throws Exception{
+		ZooKeeperMetrics mockMetrics = createStrictMock(ZooKeeperMetrics.class);
+		mockMetrics.incrementKeyCreations();
+		replay(mockMetrics);
+		
+		ZkClock clock = new ZkClock(myKeeper, mockMetrics);
+		assertNull(myKeeper.exists(key, false));
+		clock.getNextSequence(key);
+		verify(mockMetrics);
+	}
+	
 	@Test 
 	public void handleRaceConditionWhereKeyAlreadyExistsWhenClientTriesToCreateIt() 
 	throws Exception{
@@ -130,6 +142,11 @@ public class ZkClockTest {
 	@Test 
 	public void clientThrowsInterruptedExceptionWhenCreatingNewKeyAndKeyIsntCreated()
 	throws Exception{
+		ZooKeeperMetrics mockMetrics = createStrictMock(ZooKeeperMetrics.class);
+		mockMetrics.incrementInterruptedExceptions();
+		mockMetrics.incrementKeyCreations();
+		replay(mockMetrics);
+		
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
 		
 		mockKeeper.getData(key, false, new Stat());
@@ -155,11 +172,12 @@ public class ZkClockTest {
 		replay(mockKeeper);
 		
 		try{
-			ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+			ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
 			long sequence = clock.getNextSequence(key);
 			assertEquals(0, sequence);
 		}finally{
 			verify(mockKeeper);
+			verify(mockMetrics);
 		}
 	}
 	
@@ -206,15 +224,20 @@ public class ZkClockTest {
 	@Test (expected=SequencingException.class)
 	public void sessionExpiryExceptionThrownWhenIncrementingSequence() 
 	throws Exception{
+		ZooKeeperMetrics mockMetrics = createStrictMock(ZooKeeperMetrics.class);
+		mockMetrics.incrementSessionExpiredEvents();
+		replay(mockMetrics);
+		
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
 		mockKeeper.getData(key, false, new Stat());
 		expectLastCall().andThrow(new KeeperException.SessionExpiredException());
 		replay(mockKeeper);
-		ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
 		try{
 			clock.getNextSequence(key);
 		}finally{
 			verify(mockKeeper);
+			verify(mockMetrics);
 		}
 	}
 	
@@ -244,6 +267,9 @@ public class ZkClockTest {
 	@Test
 	public void clientThrowsInterruptedExceptionWhenIncrementingSequenceAndAllDataIsWritten() 
 	throws Exception{
+		ZooKeeperMetrics mockMetrics = createStrictMock(ZooKeeperMetrics.class);
+		mockMetrics.incrementInterruptedExceptions();
+		replay(mockMetrics);
 		
 		Stat stat = new Stat();
 		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
@@ -257,11 +283,12 @@ public class ZkClockTest {
 		expectLastCall().andReturn(stat);
 		replay(mockKeeper);
 		
-		ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
 		try{
 			assertEquals(12, clock.getNextSequence(key));
 		}finally{
 			verify(mockKeeper);
+			verify(mockMetrics);
 		}
 	}
 	
@@ -314,9 +341,8 @@ public class ZkClockTest {
 			verify(mockKeeper);
 			verify(mockMetrics);
 		}
-		
 	}
-	
+		
 	@Test @Ignore
 	public void testManyIterations() throws Exception{
 		int iterations = 1000000;
@@ -407,7 +433,7 @@ public class ZkClockTest {
 		public void incrementConnectionLossEvents() {}
 
 		@Override
-		public void incrementExpiredSessionEvents() {}
+		public void incrementSessionExpiredEvents() {}
 
 		@Override
 		public void incrementInterruptedExceptions() {}
