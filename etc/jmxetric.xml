@@ -43,11 +43,29 @@
 			<attribute name="ThreadCount" type="int16" />
 			<attribute name="DaemonThreadCount" type="int16" />
 		</mbean>
-		<mbean name="com.talis:name=SequencingMetrics0" pname="H1">
+		<mbean name="com.talis:name=ZkSequencingMetrics1" pname="H1">
 			<attribute name="WriteSequenceOperations"
-				pname="Write_Sequence_Operations" type="int32" units="sequences" group="Base" />
+				pname="Write_Sequence_Operations" type="int32" units="ops" group="Base" />
 			<attribute name="AverageWriteSequenceLatency"
                 pname="Average_Write_Sequence_Latency" type="int32" units="ms" group="Base" />
+            <attribute name="MinWriteSequenceLatency"
+                pname="Min_Write_Sequence_Latency" type="int32" units="ms" group="Base" />
+            <attribute name="MaxWriteSequenceLatency"
+                pname="Max_Write_Sequence_Latency" type="int32" units="ms" group="Base" />
+            <attribute name="KeyCollisions"
+                pname="Key_Collisions" type="int32" units="collisions" group="Base" />
+            <attribute name="KeyCreations"
+                pname="Key_Creations" type="int32" units="keys" group="Base" />
+            <attribute name="ConnectionLossEvents"
+                pname="Connection_Loss_Events" type="int32" units="events" group="Base" />
+            <attribute name="ErrorResponseCount"
+                pname="Error_Response_Count" type="int32" units="errors" group="Base" />
+            <attribute name="InterruptedExceptions"
+                pname="Interrupted_Exceptions" type="int32" units="exceptions" group="Base" />
+            <attribute name="KeeperExceptions"
+                pname="Keeper_Exceptions" type="int32" units="exceptions" group="Base" />
+            <attribute name="SessionExpiredEvents"
+                pname="Session_Expired_Events" type="int32" units="sessions" group="Base" />    
 		</mbean>
 	</sample>
 </jmxetric-config>
