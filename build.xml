@@ -332,9 +332,6 @@
         <ivy:retrieve pattern="${build}/dist/lib/[artifact]-[revision].[ext]" conf="runtime" sync="true" />
         <copy file= "${build.jars}/h1.jar" tofile="${build}/dist/lib/h1-${build.filename.suffix}.jar" overwrite="true" />
     	<copy file= "${src.java}/log4j.xml" tofile="${build}/dist/lib/log4j.xml" overwrite="true" />
-    	<copy file= "${security}/.h1-jmx-server-keystore" 
-    		  tofile="${build}/dist/security/.h1-jmx-server-keystore" 
-    		  overwrite="true" />
     </target>
 	
 	<target name="make-launch-scripts" depends="make-dist, resolve-runtime">
