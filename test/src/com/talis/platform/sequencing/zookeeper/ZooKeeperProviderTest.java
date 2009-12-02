@@ -171,7 +171,6 @@ public class ZooKeeperProviderTest {
 	
 	@Test
 	public void ifExpiredEventReceivedDisposeOfInstance() throws Exception{
-		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "100");
 		final ZooKeeperProvider provider = new ZooKeeperProvider();
 		ZooKeeper first = provider.get();
 		WatchedEvent sessionExpiredEvent = 
