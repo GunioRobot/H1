@@ -15,8 +15,8 @@
         <dependency org="aopalliance" name="aopalliance" rev="1.0" />
         <dependency org="com.google.code.guice" name="guice" rev="2.0" />
         <dependency org="jargs" name="jargs" rev="1.0" />
-        <dependency org="remotetea" name="oncrpc" rev="1.0" />
-        <dependency org="jmxetric-patch" name="jmxetric-patch" rev="0.1-patch-4" />
+        <dependency org="remotetea" name="oncrpc" rev="1.0.7" />
+        <dependency org="jmxetric" name="jmxetric" rev="0.0.3" />
         <dependency org="com.noelios.restlet" name="com.noelios.restlet" rev="1.1.4" />
         <dependency org="com.noelios.restlet" name="com.noelios.restlet.ext.simple" rev="1.1.4" />
         <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.5.6"/>
