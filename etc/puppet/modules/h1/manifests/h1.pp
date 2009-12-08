@@ -47,6 +47,11 @@ class h1 {
         require     => Exec["tar -zxf $h1Dist"],
         path        => ["/bin", "/sbin"];
         }
+        file { "/zkservers" :
+            ensure  => present,
+            content => template("h1/zkservers.erb"),
+            notify  => Service["h1-node"];
+        }
     service { "h1-node" :
         ensure  => running,
         pattern => "h1",
