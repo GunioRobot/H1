@@ -184,7 +184,7 @@ module Ec2
         Process.exit
       end
       
-      bucket = "majat"
+      bucket = "talis-distros"
       s3 = RightAws::S3.new(aws_access_key_id, aws_secret_access_key)
       begin 
         bucket1 = s3.bucket(bucket, false)
@@ -193,7 +193,7 @@ module Ec2
         puts "Bucket does not exist" + "\n" + e
         Process.exit
       end
-      base_name = File.basename(majatDist)
+      base_name = "h1/#{File.basename(majatDist)}"
       puts "Uploading #{majatDist} as '#{base_name}' to '#{bucket}'"
       begin
         key = RightAws::S3::Key.create(bucket1, base_name)
