@@ -18,7 +18,7 @@ class h1 {
                 group  => h1;
     }
         if $s3 == "true" {
-                s3get { "h1/$h1Dist":
+                s3get { "majat/$h1Dist":
                         cwd     => "/opt/h1",
                         name    => "$h1Dist",
                         expires => "900",
