@@ -68,7 +68,14 @@ while started == false
     end
   end
   if started_instances.length >= opts[:num]
+    puts "Started #{started_instances.length} instances."
     started = true
+  else
+    puts "Started #{started_instances.length} instances, #{pending_instances.length} still pending. Waiting... "
+    checks_before_offer_optout = 1
+    started_instances.clear
+    pending_instances.clear
+    other_instances.clear
   end
 end
 puts "Started #{started_instances.length} instances."
