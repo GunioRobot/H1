@@ -12,6 +12,9 @@ aws_access_key_id = get_aws_access_key_id()
 aws_secret_access_key = get_aws_secret_access_key()
 aws_user_id = get_aws_user_id()
 
+userdata = "PUPPETCONFIG: \"[main]\\nconfdir=/etc/puppet\\nvardir=/var/lib/puppet\\nlibdir=/etc/puppet/lib\\nssldir=$vardir/ssl\\nmanifest=/etc/puppet/manifests/site.pp\\nmodulepath=/etc/puppet/modules\\ntemplatedir=$confdir/templates\\nfiletimeout=0\\n\\n[puppetd]\\nserver=punch.kc.talis.com\\npuppetport=8139\\nruninterval=120\\nssldir=/etc/puppet/ssl\"\n"
+userdata = userdata + "\n" + "PUPPETURL: \"http://talis-distros.s3.amazonaws.com/puppet/puppet-0.25.1.tar\""
+
 opts = get_all_options()
 
 Trollop::die :ami, " : an amazon machine image must be specified" if opts[:ami] == "unknown"
@@ -39,7 +42,7 @@ createGroupIfDoesNotExist(ec2, opts[:group], aws_user_id)
 
 if opts[:startEc2] == "true"
   puts "Starting Ec2 instances..."
-  instances = ec2.run_instances(opts[:ami],opts[:num],opts[:num],opts[:group],opts[:keypair], '', 'public', opts[:type], nil, nil, opts[:zone], nil)
+  instances = ec2.run_instances(opts[:ami],opts[:num],opts[:num],opts[:group],opts[:keypair], userdata, 'public', opts[:type], nil, nil, opts[:zone], nil)
 else
   puts "Describing running Ec2 instances..."
   instances = ec2.describe_instances()
@@ -66,22 +69,6 @@ while started == false
   end
   if started_instances.length >= opts[:num]
     started = true
-  else
-    checks_before_offer_optout = checks_before_offer_optout -1
-    if checks_before_offer_optout == 0
-      puts "Started #{started_instances.length} instances, #{pending_instances.length} still pending."
-      puts "Would you like to start with just the #{started_instances.length} instances?"
-      optout = readline() 
-      if optout == "y\n" or optout == "Y\n"
-        started = true
-      else
-        puts "Started #{started_instances.length} instances, #{pending_instances.length} still pending. Waiting... "
-        checks_before_offer_optout = 1
-        started_instances.clear
-        pending_instances.clear
-        other_instances.clear
-      end
-    end
   end
 end
 puts "Started #{started_instances.length} instances."
@@ -94,11 +81,12 @@ for instance in started_instances
     instance_list = Array.new
     instance_list << instance_description[:dns_name]
     instance_list << instance_description[:private_dns_name]
+    instance_list << internalNameToIpAddress(instance_description[:private_dns_name])
     dns_list << instance_list
   end
 end
 
-puppetFiles = createPuppetFiles(dns_list, opts[:group], opts[:repo], distributionFilename, opts[:s3])
+puppetFiles = createH1PuppetFiles(dns_list, opts[:group], opts[:repo], distributionFilename, opts[:s3])
 puts "Created puppet files:"
 p puppetFiles
 
@@ -113,41 +101,3 @@ if opts[:deploy] == "true"
     aws_access_key_id, 
     aws_secret_access_key)
 end
-
-puts "Creating seed file #{opts[:seedfile]} ..."
-createSeedFile(dns_list, opts[:seedfile], 0, dns_list.size-1)
-
-puts "Creating proxy file #{opts[:proxyfile]} ..."
-createProxyFile(dns_list, opts[:proxyfile])
-
-puts "Creating address file #{opts[:addressfile]} ..."
-createAddressFile(dns_list, opts[:addressfile])
-
-puts "Creating demon nodes file #{opts[:demonodes]} ..."
-createdemoNodesFile(dns_list, opts[:demonodes])
-
-puts "Creating monitoring file #{opts[:monitoringfile]}..."
-createMonitoringFile(dns_list, opts[:monitoringfile])
-
-breakpoint = dns_list.size / 2
-
-puts "Creating SeedFirstHalf file ..."
-createSeedFile(dns_list, "SeedFirstHalf", 0, breakpoint-1)
-
-puts "Creating SeedSecondHalf file ..."
-createSeedFile(dns_list, "SeedSecondHalf", breakpoint, dns_list.size-1)
-
-puts "Creating SeedJoin file ..."
-createSeedFile(dns_list, "SeedJoin", breakpoint-1, breakpoint)
-
-puts "Creating cssh file #{opts[:csshfile]}..."
-createCssFile(dns_list, opts[:csshfile], 0, (dns_list.size-1))
-
-puts "Creating cssh_first_half.sh file ..."
-createCssFile(dns_list, "cssh_first_half.sh", 0, (breakpoint-1))
-
-puts "Creating cssh_second_half.sh file ..."
-createCssFile(dns_list, "cssh_second_half.sh", breakpoint, (dns_list.size-1))
-
-
-
