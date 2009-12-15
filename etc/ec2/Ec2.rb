@@ -43,12 +43,6 @@ module Ec2
       opt :puppetmaster, "Puppet Master", :default => "punch.kc.talis.local"
       opt :user, "user to drop as", :default => "puppetdrop"
       opt :password, "Password for ssh session", :default => "unknown"
-      opt :seedfile, "File to Output Seed List", :default => ".seedlist"
-      opt :proxyfile, "File to Output Proxy List", :default => "proxy.serverlist"
-      opt :addressfile, "File to Output Address Coversion List", :default => "graph.addressConversion"
-      opt :demonodes, "File to Output Demo Node List", :default => "demoNodes.js"
-      opt :monitoringfile, "File to Output Ganglia Monitoring Node List", :default => "ganglia-partial.conf"
-      opt :csshfile, "File to output cssh script", :default => "cssh.sh"
       opt :startEc2, "Create Ec2 instances, or just describe running ones", :default => "false"
       opt :deploy, "Deploy software by pushing out to the puppet master", :default => "false"
       opt :zone, "Availability zone, e.g. us-east-1b, eu-west-1a, eu-west-1b", :default => nil
@@ -68,14 +62,14 @@ module Ec2
     distributionFilename = nil
     Dir.foreach(dist) {
       |name| 
-      if name.match('majat-')
+      if name.match('h1-')
         if name.match('.tar.gz')
           distributionFilename = name
         end
       end
     }
     if distributionFilename == nil
-      puts "Unable to find majat distribution - exiting"
+      puts "Unable to find h1 distribution - exiting"
       exit
     end
     return distributionFilename
@@ -102,7 +96,7 @@ module Ec2
     end    
   end
   
-  def createPuppetFiles(dns_list, group, repo, distributionFilename, s3)
+  def createH1PuppetFiles(dns_list, group, repo, distributionFilename, s3)
     libFilename = nil
     libFilename = distributionFilename.split(".")[0] + ".jar"
     filesCreated = Array.new
@@ -122,22 +116,38 @@ module Ec2
     myFile = File.new(filename,"w")
 
     myFile.puts "node #{group}-basenode {"
-    myFile.puts "  $repoUrl = \"#{repo}\""
-    myFile.puts "  $majatDist = \"#{distributionFilename}\""
-    myFile.puts "  $majatLib = \"#{libFilename}\""
-    myFile.puts "  $java = \"jre16007\""
+    myFile.puts "  $h1Dist = \"#{distributionFilename}\""
+    myFile.puts "  $java = \"jre16016\""
     myFile.puts "  $s3 = \"#{s3}\""
-    myFile.puts "  include majat, ganglia, ec2"
+    myFile.print "  $h1_internal_ip_list = [ "
+    first = true
+    for dns in dns_list
+      current_internal_address = dns[2]
+      if first == false
+        myFile.print", "
+      end
+      first = false
+      myFile.print " \""
+      myFile.print current_internal_address 
+      myFile.print "\""
+    end
+    myFile.puts " ]"
+    myFile.puts "  include env, ganglia"
     myFile.puts "}"
     myFile.puts " "
 
+    zookeeper_server = 1
     for dns in dns_list
-      current_internal_address = dns[1]
+      current_internal_name = dns[1]
       myFile.print "node "
       myFile.print "'"
-      myFile.print current_internal_address
-      myFile.print "' inherits #{group}-basenode {} "
+      myFile.print current_internal_name
+      myFile.print "' inherits #{group}-basenode { "
       myFile.puts ""
+      myFile.puts "  $zookeeper_server = \"#{zookeeper_server}\""
+      myFile.puts "  include h1"
+      myFile.puts "} "
+      zookeeper_server = zookeeper_server + 1
     end
     myFile.close 
     filesCreated << filename
@@ -174,7 +184,7 @@ module Ec2
         Process.exit
       end
       
-      bucket = "majat"
+      bucket = "talis-distros"
       s3 = RightAws::S3.new(aws_access_key_id, aws_secret_access_key)
       begin 
         bucket1 = s3.bucket(bucket, false)
@@ -183,7 +193,7 @@ module Ec2
         puts "Bucket does not exist" + "\n" + e
         Process.exit
       end
-      base_name = File.basename(majatDist)
+      base_name = "h1/#{File.basename(majatDist)}"
       puts "Uploading #{majatDist} as '#{base_name}' to '#{bucket}'"
       begin
         key = RightAws::S3::Key.create(bucket1, base_name)
@@ -195,108 +205,14 @@ module Ec2
     end    
   end
   
-  def createCssFile(dns_list, filename, startIndex, endIndex)
-    csshFile = File.new(filename,"w")
-    csshFile.print "cssh -o \"-i ~/.amazon/eu-kp-1 -l root\" "
-    for i in startIndex..endIndex
-      dns = dns_list[i]
-      current_external_address = dns[0]
-      csshFile.print "#{current_external_address} "
-    end
-    csshFile.puts " "
-    csshFile.close    
-  end
-  
-  def createSeedFile(dns_list, filename, startIndex, endIndex)
-    seedFile = File.new(filename,"w")
-    previous_internal_address = nil
-    previous_external_address = nil
-    for i in startIndex..endIndex
-      dns = dns_list[i]
-      current_external_address = dns[0]
-      current_internal_address = dns[1]
-      if previous_internal_address != nil
-        seedFile.puts "#{current_external_address},#{current_internal_address},#{previous_internal_address}"
-      end    
-      previous_internal_address = current_internal_address
-      previous_external_address = current_external_address
-    end
-    seedFile.close    
-  end
-  
-  def createMonitoringFile(dns_list, filename)
-    monitoringFile = File.new(filename,"w")
-    for dns in dns_list
-      current_external_address = dns[0]
-      monitoringFile.puts "data_source \"#{current_external_address}\" #{current_external_address}"
-    end
-    monitoringFile.puts " "
-    monitoringFile.close    
-  end
-  
-  def createdemoNodesFile(dns_list, filename)
-    demoNodesFile = File.new(filename,"w")
-    demoNodesFile.puts "var nodes = ["
-    first = true
-    for dns in dns_list
-      current_external_address = dns[0]
-      if !first
-        demoNodesFile.puts ","
-      end
-      demoNodesFile.print "\"#{current_external_address}\""
-      first = false
-    end
-    demoNodesFile.puts "];"
-    demoNodesFile.puts " "
-    demoNodesFile.puts "var http_port = ["
-    first = true
-    for dns in dns_list
-      if !first
-        demoNodesFile.puts ","
-      end
-      demoNodesFile.print "9696"
-      first = false
-    end
-    demoNodesFile.puts "];"
-    demoNodesFile.puts " "
-    demoNodesFile.puts "var gossip_port = ["
-    first = true
-    for dns in dns_list
-      if !first
-        demoNodesFile.puts ","
-      end
-      demoNodesFile.print "9797"
-      first = false
-    end
-    demoNodesFile.puts "];"
-    demoNodesFile.puts " "
-    demoNodesFile.close    
-  end
-  
-  def createAddressFile(dns_list, filename)
-    addressFile = File.new(filename,"w")
-    for dns in dns_list
-      current_external_address = dns[0]
-      current_internal_address = dns[1]
-      addressFile.puts "#{current_internal_address}:9797, #{current_external_address}:9696"
-    end
-    addressFile.puts " "
-    addressFile.close    
-  end
-  
-  def createProxyFile(dns_list, filename)
-    proxyFile = File.new(filename,"w")
-    first = true
-    for dns in dns_list
-      current_external_address = dns[0]
-      if !first
-        proxyFile.print ","
-      end
-      proxyFile.print "#{current_external_address}:9696"
-      first = false
-    end
-    proxyFile.puts " "
-    proxyFile.close
+  def internalNameToIpAddress(internal_name)
+    internal_ip = String.new(str=internal_name)
+    internal_ip["ip-"] = ""
+    internal_ip[".eu-west-1.compute.internal"] = ""
+    internal_ip["-"] = "."
+    internal_ip["-"] = "."
+    internal_ip["-"] = "."
+    return internal_ip
   end
   
 end

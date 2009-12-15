@@ -340,6 +340,7 @@
         <copy file= "${etc}/h1-node.sh" tofile="${build}/dist/h1-node.sh" overwrite="true" />
         <copy file= "${etc}/h1-node-command" tofile="${build}/dist/h1-node-command" overwrite="true" />
         <copy file= "${etc}/jmxetric.xml" tofile="${build}/dist/jmxetric.xml" overwrite="true" />
+        <copy file= "${etc}/jmxetric-properties" tofile="${build}/dist/jmxetric-properties" overwrite="true" />
       	<ivy:cachepath pathid="resolved.classpath" keep="true"/>
 	    <pathconvert targetos="unix" property="launch.classpath" refid="resolved.runtime.classpath">
 	      <mapper>
