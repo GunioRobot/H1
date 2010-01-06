@@ -27,7 +27,6 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -42,6 +41,7 @@ public class ZkClockTest {
 	
 	private ZkTestHelper myTestHelper;
 	private ZooKeeper myKeeper;
+	private ZooKeeperProvider myKeeperProvider;
 	private String key;
 	
 	private byte[] firstDataValue = new byte[] { 0,0,0,0,0,0,0,10 };
@@ -58,6 +58,7 @@ public class ZkClockTest {
 		myKeeper = new ZooKeeper(	ZkTestHelper.DEFAULT_HOST_PORT, 
             						ZkTestHelper.CONNECTION_TIMEOUT, 
             						new NullWatcher());
+		myKeeperProvider = getProviderForZooKeeper(myKeeper);
 		key = String.format("/test-key-%s-%s", KEY_SEED, TEST_INDEX++);
 	}
 	
@@ -69,7 +70,7 @@ public class ZkClockTest {
 	
 	@Test
 	public void createNodeForKeyIfRequired() throws Exception{
-		ZkClock clock = new ZkClock(myKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		assertNull(myKeeper.exists(key, false));
 
 		long sequence = clock.getNextSequence(key);
@@ -84,7 +85,7 @@ public class ZkClockTest {
 		mockMetrics.incrementKeyCreations();
 		replay(mockMetrics);
 		
-		ZkClock clock = new ZkClock(myKeeper, mockMetrics);
+		ZkClock clock = new ZkClock(myKeeperProvider, mockMetrics);
 		assertNull(myKeeper.exists(key, false));
 		clock.getNextSequence(key);
 		verify(mockMetrics);
@@ -107,7 +108,8 @@ public class ZkClockTest {
 		replay(mockKeeper);
 		
 		try{
-			ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+			ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+											new NullMetrics());
 			long sequence = clock.getNextSequence(key);
 			assertEquals(0, sequence);
 		}finally{
@@ -131,7 +133,8 @@ public class ZkClockTest {
 		replay(mockKeeper);
 		
 		try{
-			ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+			ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+										new NullMetrics());
 			long sequence = clock.getNextSequence(key);
 			assertEquals(0, sequence);
 		}finally{
@@ -172,7 +175,8 @@ public class ZkClockTest {
 		replay(mockKeeper);
 		
 		try{
-			ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
+			ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+													mockMetrics);
 			long sequence = clock.getNextSequence(key);
 			assertEquals(0, sequence);
 		}finally{
@@ -183,7 +187,7 @@ public class ZkClockTest {
 	
 	@Test 
 	public void createNextSequenceForExistingKey() throws Exception{
-		ZkClock clock = new ZkClock(myKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		ByteBuffer buf = ByteBuffer.wrap(ZkClock.DEFAULT_DATA);
 		System.out.println(buf.getLong());
 		System.out.println(clock.getNextSequence(key));
@@ -195,7 +199,7 @@ public class ZkClockTest {
 		
 	@Test
 	public void clockSurvivesDisconnectionFromServer() throws Exception{
-		ZkClock clock = new ZkClock(myKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		assertEquals(0, clock.getNextSequence(key));
 		myTestHelper.stopServer();
 		Thread.sleep(5000l);
@@ -207,7 +211,7 @@ public class ZkClockTest {
 	public void retryOperationsThenFailWhileDisconnected() throws Exception{
 		System.setProperty(ZkClock.RETRY_DELAY_PROPERTY, "100");
 		System.setProperty(ZkClock.RETRY_COUNT_PROPERTY, "2");
-		ZkClock clock = new ZkClock(myKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		assertEquals(0, clock.getNextSequence(key));
 		myTestHelper.stopServer();
 		Thread.sleep(5000l);
@@ -221,6 +225,22 @@ public class ZkClockTest {
 		assertEquals(1, clock.getNextSequence(key));
 	}
 	
+	@Test 
+	public void surviveSessionExpiration() throws Exception{
+		System.setProperty(ZooKeeperProvider.SESSION_TIMEOUT_PROPERTY, "100");
+		try{
+			ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
+			assertEquals(0, clock.getNextSequence(key));
+			myTestHelper.stopServer();
+			Thread.sleep(300l);
+			myTestHelper.startServer();
+			assertEquals(1, clock.getNextSequence(key));
+		}finally{
+			System.clearProperty(ZooKeeperProvider.SESSION_TIMEOUT_PROPERTY);
+		}
+	}
+	
+	
 	@Test (expected=SequencingException.class)
 	public void sessionExpiryExceptionThrownWhenIncrementingSequence() 
 	throws Exception{
@@ -232,7 +252,8 @@ public class ZkClockTest {
 		mockKeeper.getData(key, false, new Stat());
 		expectLastCall().andThrow(new KeeperException.SessionExpiredException());
 		replay(mockKeeper);
-		ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
+		ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+										mockMetrics);
 		try{
 			clock.getNextSequence(key);
 		}finally{
@@ -251,7 +272,8 @@ public class ZkClockTest {
 		expectLastCall().andThrow(new KeeperException.MarshallingErrorException());
 		expectLastCall().andThrow(new KeeperException.BadArgumentsException());
 		replay(mockKeeper);
-		ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+										new NullMetrics());
 		try{
 			clock.getNextSequence(key);
 		}catch (SequencingException e){
@@ -283,7 +305,8 @@ public class ZkClockTest {
 		expectLastCall().andReturn(stat);
 		replay(mockKeeper);
 		
-		ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
+		ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+										mockMetrics);
 		try{
 			assertEquals(12, clock.getNextSequence(key));
 		}finally{
@@ -308,7 +331,8 @@ public class ZkClockTest {
 		expectLastCall().andReturn(stat);
 		replay(mockKeeper);
 		
-		ZkClock clock = new ZkClock(mockKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+										new NullMetrics());
 		try{
 			assertEquals(11, clock.getNextSequence(key));
 		}finally{
@@ -334,7 +358,8 @@ public class ZkClockTest {
 		expectLastCall().andReturn(stat);
 		replay(mockKeeper);
 		
-		ZkClock clock = new ZkClock(mockKeeper, mockMetrics);
+		ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), 
+										mockMetrics);
 		try{
 			assertEquals(12, clock.getNextSequence(key));
 		}finally{
@@ -346,7 +371,7 @@ public class ZkClockTest {
 	@Test @Ignore
 	public void testManyIterations() throws Exception{
 		int iterations = 1000000;
-		ZkClock clock = new ZkClock(myKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		long seq = 0;
 		long start = System.currentTimeMillis();
 		for (int i = 0 ; i < iterations ; i++){
@@ -360,7 +385,7 @@ public class ZkClockTest {
 	@Test @Ignore
 	public void testConcurrentClients() throws Exception{
 		int iterations = 10000;
-		ZkClock clock = new ZkClock(myKeeper, new NullMetrics());
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 
 		CountDownLatch startGate = new CountDownLatch(1);
 		CountDownLatch endGate = new CountDownLatch(5);
@@ -384,6 +409,15 @@ public class ZkClockTest {
 		assertEquals(iterations, clock.getNextSequence("/third-key") );
 		assertEquals(iterations, clock.getNextSequence("/fourth-key") );
 		
+	}
+	
+	private ZooKeeperProvider getProviderForZooKeeper(final ZooKeeper keeper){
+		return new ZooKeeperProvider(){
+			@Override
+			public ZooKeeper get(){
+				return keeper;
+			}
+		};
 	}
 	
 	private long getNodeDataAsLong(String key) throws Exception{

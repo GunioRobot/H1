@@ -335,12 +335,6 @@
     </target>
 	
 	<target name="make-launch-scripts" depends="make-dist, resolve-runtime">
-        <copy file= "${etc}/install_h1_service.sh" tofile="${build}/dist/install_h1_service.sh" overwrite="true" />
-        <copy file= "${etc}/h1-node.init.d" tofile="${build}/dist/h1-node.init.d" overwrite="true" />
-        <copy file= "${etc}/h1-node.sh" tofile="${build}/dist/h1-node.sh" overwrite="true" />
-        <copy file= "${etc}/h1-node-command" tofile="${build}/dist/h1-node-command" overwrite="true" />
-        <copy file= "${etc}/jmxetric.xml" tofile="${build}/dist/jmxetric.xml" overwrite="true" />
-        <copy file= "${etc}/jmxetric-properties" tofile="${build}/dist/jmxetric-properties" overwrite="true" />
       	<ivy:cachepath pathid="resolved.classpath" keep="true"/>
 	    <pathconvert targetos="unix" property="launch.classpath" refid="resolved.runtime.classpath">
 	      <mapper>
@@ -350,6 +344,13 @@
 	        </chainedmapper>
 	      </mapper>
 	    </pathconvert>
+        <copy file= "${etc}/install_h1_service.sh" tofile="${build}/dist/install_h1_service.sh" overwrite="true" />
+        <copy file= "${etc}/h1-node.init.d" tofile="${build}/dist/h1-node.init.d" overwrite="true" />
+        <copy file= "${etc}/h1-node.sh" tofile="${build}/dist/h1-node.sh" overwrite="true" />
+        <copy file= "${etc}/h1-node-command" tofile="${build}/dist/h1-node-command" overwrite="true" />
+        <copy file= "${etc}/jmxetric.xml" tofile="${build}/dist/jmxetric.xml" overwrite="true" />
+        <copy file= "${etc}/jmxetric-properties" tofile="${build}/dist/jmxetric-properties" overwrite="true" />
+		<copy file= "${etc}/log4j.xml" tofile="${build}/dist/lib/log4j.xml" overwrite="true" />
         <replace dir="${build}/dist" token="@@CLASSPATH@@" value="${launch.classpath}"/>    
         <replace dir="${build}/dist" token="@@H1-JAR@@" value="h1-${build.filename.suffix}.jar"/>    
 	</target>

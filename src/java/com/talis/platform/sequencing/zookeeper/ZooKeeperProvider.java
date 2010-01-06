@@ -21,11 +21,11 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 	
 	public static final String DEFAULT_SERVER_LIST_LOCATION = "/zkservers";
 	public static final String SERVER_LIST_LOCATION_PROPERTY = 
-		"com.talis.plaftform.sequencing.zookeeper.servers";
+		"com.talis.platform.sequencing.zookeeper.servers";
 
 	public static final int DEFAULT_SESSION_TIMEOUT = 10 * 1000;
 	public static final String SESSION_TIMEOUT_PROPERTY = 
-		"com.talis.plaftform.sequencing.zookeeper.session.timeout";
+		"com.talis.platform.sequencing.zookeeper.session.timeout";
 
 	public static final int DEFAULT_CONNECTION_TIMEOUT = 10 * 1000;
 	public static final String CONNECTION_TIMEOUT_PROPERTY = 

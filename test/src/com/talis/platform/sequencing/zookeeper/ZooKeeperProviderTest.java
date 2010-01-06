@@ -3,7 +3,6 @@ package com.talis.platform.sequencing.zookeeper;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -23,6 +22,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.talis.platform.sequencing.SequencingException;
 
@@ -96,7 +97,7 @@ public class ZooKeeperProviderTest {
 	public void resetDisposesOfZookeeperClientInstance() 
 	throws Exception{
 		ZooKeeperProvider provider = new ZooKeeperProvider();
-				ZooKeeper first = provider.get();
+		ZooKeeper first = provider.get();
 		provider.reset();
 		ZooKeeper second = provider.get();
 		assertNotSame(first, second);
@@ -142,6 +143,7 @@ public class ZooKeeperProviderTest {
 		Tuple t = future.get();
 		assertNotNull(t.client);
 		t.client.close();
+	
 		assertTrue( (t.time2 - t.time1) >= waitPeriod);
 	}
 	
@@ -180,6 +182,27 @@ public class ZooKeeperProviderTest {
 		provider.process(sessionExpiredEvent);
 		ZooKeeper second = provider.get();
 		assertNotSame(first, second);
+	}
+	
+	@Test 
+	public void explicitSessionExpiryTriggersDisposalOfInstance() throws Exception{
+		Logger logger = LoggerFactory.getLogger(ZooKeeperProviderTest.class);
+		final ZooKeeperProvider provider = new ZooKeeperProvider();
+		ZooKeeper first = provider.get();
+		
+		ZooKeeper second = new ZooKeeper( 	provider.getEnsembleList(),
+		  				   					ZkTestHelper.CONNECTION_TIMEOUT, 
+		  				   					new NullWatcher(),
+		  				   					first.getSessionId(),
+		  				   					first.getSessionPasswd());
+		while(second.getState() != ZooKeeper.States.CONNECTED){
+			Thread.sleep(10l);
+		}
+		second.close();
+		logger.info("Closed second client");
+		Thread.sleep(3000l);
+		ZooKeeper third = provider.get();
+		assertNotSame(first, third);
 	}
 	
 	private void ensureServerStarted(String hostPort){
