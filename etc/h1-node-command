@@ -1,2 +1,2 @@
 #!/bin/bash
-LAUNCH_COMMAND="java -classpath "lib:lib/*" -Xms128m -Xmx512m -Dcom.talis.platform.sequencing.zookeeper.servers=/zkservers com.talis.platform.sequencing.http.SequenceServer"
+LAUNCH_COMMAND="java -classpath "lib/log4j.xml:lib/zkservers:lib:lib/*" -Xms128m -Xmx512mcom.talis.platform.sequencing.http.SequenceServer"
