@@ -1,4 +1,0 @@
-./deploy_to_ec2.rb --ami ami-82654ef6 --num 3 --group msl-dev --type m1.small --repo majat.s3.amazonaws.com --dist ../../build/dist --s3 true --startEc2 true
-
-
-./deploy_to_ec2.rb --ami ami-82654ef6 --num 1 --group msl-dev1 --type m1.small --repo majat.s3.amazonaws.com --dist ../../build/dist --s3 true --startEc2 false --deploy true --password majat123

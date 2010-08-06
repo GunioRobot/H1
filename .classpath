@@ -1,10 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="src" path="test/data"/>
-	<classpathentry kind="src" path="src/java"/>
-	<classpathentry kind="src" path="test/src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?ivyXmlPath=ivy.xml&amp;confs=runtime%2Cbuild&amp;ivySettingsPath=project%3A%2F%2F%2Fivysettings.xml&amp;loadSettingsOnDemand=false&amp;propertyFiles="/>
-	<classpathentry kind="output" path="bin"/>
+  <classpathentry kind="src" path="src/test/java" output="target/test-classes" including="**/*.java"/>
+  <classpathentry kind="src" path="src/test/resources" output="target/test-classes" excluding="**/*.java"/>
+  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
+  <classpathentry kind="output" path="target/classes"/>
+  <classpathentry kind="var" path="M2_REPO/com/noelios/restlet/com.noelios.restlet/1.1.4/com.noelios.restlet-1.1.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/noelios/restlet/com.noelios.restlet.ext.simple/1.1.4/com.noelios.restlet.ext.simple-1.1.4.jar"/>
+  <classpathentry kind="lib" path="lib/definalizer-0.1.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/google/code/guice/guice/2.0.1/guice-2.0.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/junit/junit/4.7/junit-4.7.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.5.6/slf4j-api-1.5.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/talis/talis-jmx/1.0.0/talis-jmx-1.0.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/talis/talis-jmx/1.0.0/talis-jmx-1.0.0-tests.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/zookeeper/3.2.1/zookeeper-3.2.1.jar"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 </classpath>

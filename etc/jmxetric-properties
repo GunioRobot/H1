@@ -1,4 +1,0 @@
-#!/bin/bash
-GANGLIA_HOST=ganglia.inf.talis
-GANGLIA_PORT=2389
-JMXETRIC_MODE=unicast

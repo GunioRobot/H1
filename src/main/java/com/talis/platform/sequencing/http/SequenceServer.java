@@ -40,12 +40,17 @@ public class SequenceServer {
 	}
 	
 	public static void main(String[] args) {
-		LOG.info("Starting Service");
+		int port = 9595;
+		if (args.length > 0){
+			port = Integer.parseInt(args[0]);
+		}
+		LOG.info("Starting Service on port %s port");
+		
 		INJECTOR = initInjector();
 		INJECTOR.getInstance(SequencingMetrics.class);
 		Component myWebserver = new Component();
 	    myWebserver.getLogService().setEnabled(false);
-	    myWebserver.getServers().add(Protocol.HTTP, 9595);
+	    myWebserver.getServers().add(Protocol.HTTP, port);
 	    VirtualHost defaultHost = myWebserver.getDefaultHost();
 	               
 	    SequencingApplication sequencingApplication = 

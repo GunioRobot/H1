@@ -1,4 +1,3 @@
 #!/bin/bash
-source jmxetric-properties
 CP=lib:lib/@@H1-JAR@@:@@CLASSPATH@@
-LAUNCH_COMMAND="java -javaagent:./lib/jmxetric-0.0.3.jar=host=$GANGLIA_HOST,port=$GANGLIA_PORT,config=jmxetric.xml,mode=$JMXETRIC_MODE,wireformat31x=true,process=SequenceServer -classpath $CP -Xms128m -Xmx512m -Dcom.talis.plaftform.sequencing.zookeeper.servers=/zkservers  -Dfile-encoding=UTF-8 -Djavax.net.ssl.keyStore=./security/.h1-jmx-server-keystore -Djavax.net.ssl.keyStorePassword=bl1ng441S -Djavax.net.ssl.trustStore=./security/.hi-jmx-server-keystore -Djavax.net.ssl.trustStorePassword=bl1ng441S com.talis.platform.sequencing.http.SequenceServer"
+LAUNCH_COMMAND="java -classpath $CP -Xms128m -Xmx512m -Dcom.talis.plaftform.sequencing.zookeeper.servers=/zkservers com.talis.platform.sequencing.http.SequenceServer"

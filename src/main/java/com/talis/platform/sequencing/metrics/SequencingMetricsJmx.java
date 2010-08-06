@@ -11,7 +11,7 @@ import javax.management.NotCompliantMBeanException;
 
 import com.talis.platform.metrics.JmxMetricsReporterBase;
 
-public class SequencingMetricsJmx extends JmxMetricsReporterBase 
+public class SequencingMetricsJmx extends JmxSupport 
 implements SequencingMetrics, SequencingMetricsJmxMBean {
 
 	private final AtomicInteger writeSequenceOperations = new AtomicInteger(0);

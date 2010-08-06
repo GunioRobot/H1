@@ -10,7 +10,7 @@ import javax.management.NotCompliantMBeanException;
 
 import com.talis.platform.sequencing.metrics.SequencingMetricsJmx;
 
-public class ZooKeeperMetricsJmx extends SequencingMetricsJmx 
+public class ZooKeeperMetricsJmx extends JmxSupport 
 implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 
 	
