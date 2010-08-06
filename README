@@ -1,0 +1,75 @@
+Build
+===============================================================================
+Using maven - build a distro with mvn package assembly:assembly
+
+Server Configuration
+===============================================================================
+
+H1 runs as a simple HTTP service, fronting a logical clock - initially a 
+ZooKeeper backed clock is provided. H1's job is to maintain and hand out 
+sequence numbers on a per key basis. The clock maintains a sequential counter
+for any number of (semi)arbitrary keys. Clients can cause the clock to tick by
+ making a HTTP POST to a URL representing the key. H1 will guarantee that the
+ sequence number is increased by exactly 1, synchronising access to the counter
+ and will return its new value in the response's entity body.
+ 
+ Example
+ =====================================================================
+ 
+    sam@popeye:~$ curl -v -X POST http://h1-01.talis.local:9595/seq/foo
+    * About to connect() to h1-01.talis.local port 9595 (#0)
+    *   Trying 172.30.3.140... connected
+    * Connected to h1-01.talis.local (172.30.3.140) port 9595 (#0)
+    > POST /seq/foo HTTP/1.1
+    > User-Agent: curl/7.21.0 (x86_64-unknown-linux-gnu) libcurl/7.21.0
+    > Host: h1-01.talis.local:9595
+    > Accept: */*
+    > 
+    < HTTP/1.1 200 The request has succeeded
+    < Content-Type: text/plain; charset=ISO-8859-1
+    < Content-Length: 4
+    < Date: Fri, 06 Aug 2010 20:59:51 GMT
+    < Accept-Ranges: bytes
+    < Server: H1 Server
+    < 
+    * Connection #0 to host h1-01.talis.local left intact
+    * Closing connection #0
+    5015
+    
+    sam@popeye:~$ curl -v -X POST http://h1-01.talis.local:9595/seq/foo
+    *  About to connect() to h1-01.talis.local port 9595 (#0)
+    *   Trying 172.30.3.140... connected
+    * Connected to h1-01.talis.local (172.30.3.140) port 9595 (#0)
+    > POST /seq/foo HTTP/1.1
+    > User-Agent: curl/7.21.0 (x86_64-unknown-linux-gnu) libcurl/7.21.0
+    > Host: h1-01.talis.local:9595
+    > Accept: */*
+    > 
+    < HTTP/1.1 200 The request has succeeded
+    < Content-Type: text/plain; charset=ISO-8859-1
+    < Content-Length: 4
+    < Date: Fri, 06 Aug 2010 21:01:17 GMT
+    < Accept-Ranges: bytes
+    < Server: H1 Server
+    < 
+    * Connection #0 to host h1-01.talis.local left intact
+    * Closing connection #0
+    5016  
+ 
+H1 expects to be able to connect to a running Zookeeper ensemble, specify the
+ servers that you want H1 to connect to (it will only connect to 1 at a time)
+ in the lib/zkservers file (or in another file, location specified by the 
+com.talis.platform.sequencing.zookeeper.servers system property), one host:port
+ pair per line. All of the state is handled by the Zookeeper ensemble, so 
+ theoretically you can run as many load balanced instances of H1 as you like.
+    
+Deployment and install are still a bit rough and ready, but the distribution
+built by maven includes some crude startup scripts. Future work will probably
+include swapping out Restlet for a Jersey + Grizzly/Jetty combo and possibly 
+some alternative clock implementations. 
+
+The optimistic locking approach taken by the ZkClock definitely has its 
+limitations, but this has been running in production for a moderately loaded
+application with very little effort applied to the sharding and distribution of
+keys for some time without any major issues.
+
