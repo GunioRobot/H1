@@ -1,6 +1,6 @@
 <projectDescription>
   <name>h1</name>
-  <comment/>
+  <comment>Simple HTTP fronted service to provide contiguous sequence numbers per key</comment>
   <projects/>
   <buildSpec>
     <buildCommand>

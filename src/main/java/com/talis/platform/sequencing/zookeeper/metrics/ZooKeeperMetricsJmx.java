@@ -26,7 +26,7 @@ import javax.management.NotCompliantMBeanException;
 
 import com.talis.platform.sequencing.metrics.SequencingMetricsJmx;
 
-public class ZooKeeperMetricsJmx extends JmxSupport 
+public class ZooKeeperMetricsJmx extends SequencingMetricsJmx
 implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 
 	
@@ -121,7 +121,5 @@ implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 		keeperExceptions.set(0);
 		return valueToReturn;
 	}
-
-
 	
 }

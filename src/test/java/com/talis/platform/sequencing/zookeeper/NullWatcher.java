@@ -22,6 +22,5 @@ import org.apache.zookeeper.Watcher;
 public class NullWatcher implements Watcher {
     public void process(WatchedEvent event) { 
     	/* nada */
-    	System.out.println(event);
     }
 }

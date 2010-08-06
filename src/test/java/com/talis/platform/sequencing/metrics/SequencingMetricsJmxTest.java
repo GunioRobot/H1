@@ -20,18 +20,19 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.talis.platform.metrics.JmxMetricsReporterBaseTest;
+import com.talis.jmx.AbstractJmxSupportTest;
+import com.talis.jmx.JmxSupport;
 
-public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
+public class SequencingMetricsJmxTest extends AbstractJmxSupportTest{
 
 	@Override
-	public SequencingMetricsJmx getReporter() throws Exception{
+	public JmxSupport getReporter() throws Exception{
 		return new SequencingMetricsJmx();
 	}
 	
 	@Test
 	public void recordingSequenceWriteLatenciesGivesAverage() throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		reporter.recordSequenceWriteLatency(5);
 		reporter.recordSequenceWriteLatency(10);
@@ -43,7 +44,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void retrievingAverageSequenceWriteLatencyResetsCounts()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		assertEquals(5, reporter.getAverageWriteSequenceLatency());
 		assertEquals(0, reporter.getAverageWriteSequenceLatency());
@@ -52,14 +53,14 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void averageSequenceWriteLatencyIsZeroIfNoOperationsRecorded()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		assertEquals(0, reporter.getAverageWriteSequenceLatency());
 	}
 	
 	@Test
 	public void recordingSequenceWriteLatencyIncrementsOperationCount()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		reporter.recordSequenceWriteLatency(4);
 		reporter.recordSequenceWriteLatency(6);
@@ -69,7 +70,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void recordingSequenceWriteLatencyWithNewFloorValue()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(6);
 		reporter.recordSequenceWriteLatency(5);
 		assertEquals(5, reporter.getMinWriteSequenceLatency());
@@ -78,7 +79,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void recordingSequenceWriteLatencyWithNewCeilingValue()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		reporter.recordSequenceWriteLatency(6);
 		assertEquals(6, reporter.getMaxWriteSequenceLatency());
@@ -88,7 +89,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void retrievingSequenceWriteMinLatencyResetsCounter()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		assertEquals(5, reporter.getMinWriteSequenceLatency());
 		assertEquals(0, reporter.getMinWriteSequenceLatency());
@@ -97,7 +98,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void retrievingSequenceWriteMaxLatencyResetsCounter()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		assertEquals(5, reporter.getMaxWriteSequenceLatency());
 		assertEquals(0, reporter.getMaxWriteSequenceLatency());
@@ -106,7 +107,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void retrievingSequenceWriteCountResetsCounter()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.recordSequenceWriteLatency(5);
 		assertEquals(1, reporter.getWriteSequenceOperations());
 		assertEquals(0, reporter.getWriteSequenceOperations());
@@ -114,7 +115,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	
 	@Test
 	public void incrementErrorResponses() throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.incrementErrorResponses();
 		reporter.incrementErrorResponses();
 		reporter.incrementErrorResponses();
@@ -125,7 +126,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void retrievingErrorResponsesResetsCounts()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		reporter.incrementErrorResponses();
 		assertEquals(1, reporter.getErrorResponseCount());
 		assertEquals(0, reporter.getErrorResponseCount());
@@ -134,7 +135,7 @@ public class SequencingMetricsJmxTest extends JmxMetricsReporterBaseTest {
 	@Test
 	public void errorResponseCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
-		SequencingMetricsJmx reporter = getReporter();
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		assertEquals(0, reporter.getErrorResponseCount());
 	}
 }

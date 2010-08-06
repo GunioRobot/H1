@@ -27,7 +27,7 @@
 
     <root> 
         <level value="warn"/>
-        <appender-ref ref="stdout" /> 
+        <appender-ref ref="NULL" /> 
     </root> 
 
 </log4j:configuration>

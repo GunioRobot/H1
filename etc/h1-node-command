@@ -1,3 +1,2 @@
 #!/bin/bash
-CP=lib:lib/@@H1-JAR@@:@@CLASSPATH@@
-LAUNCH_COMMAND="java -classpath $CP -Xms128m -Xmx512m -Dcom.talis.plaftform.sequencing.zookeeper.servers=/zkservers com.talis.platform.sequencing.http.SequenceServer"
+LAUNCH_COMMAND="java -classpath "lib:lib/*" -Xms128m -Xmx512m -Dcom.talis.platform.sequencing.zookeeper.servers=/zkservers com.talis.platform.sequencing.http.SequenceServer"

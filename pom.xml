@@ -4,7 +4,7 @@
 
   <groupId>com.talis.platform</groupId>
   <artifactId>h1</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
   <name>H1 Sequence Server</name>
   <url>http://github.com/talisplatform/h1</url>
@@ -39,6 +39,24 @@
         <url>http://oss.talisplatform.com/content/repositories/talis-releases</url>
     </repository>
   </distributionManagement>
+
+  <repositories>
+    <repository>  
+        <id>maven-restlet</id>  
+        <name>Public online Restlet repository</name>  
+        <url>http://maven.restlet.org</url>  
+    </repository> 
+    <repository>
+      <id>apache-staging</id>
+      <name>Apache Staging Repo</name>
+      <url>http://people.apache.org/repo/m2-ibiblio-rsync-repository</url>
+    </repository>
+    <repository>
+        <id>talis-releases</id>
+        <url>http://oss.talisplatform.com/content/repositories/talis-releases</url>
+    </repository>    
+  </repositories>
+
   
   <dependencies>
 
@@ -79,11 +97,25 @@
       <artifactId>slf4j-api</artifactId>
       <version>1.5.6</version>
     </dependency>
-    
     <dependency>
-      <groupId>org.apache</groupId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.5.6</version>
+    </dependency>
+    <dependency>
+        <groupId>aopalliance</groupId>
+        <artifactId>aopalliance</artifactId>
+        <version>1.0</version>
+    </dependency> 
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
       <artifactId>zookeeper</artifactId>
-      <version>3.2.1</version>
+      <version>3.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>1.4</version>
     </dependency>
     
     <!--  Test scoped dependencies -->
@@ -94,7 +126,6 @@
       <version>4.7</version>
       <scope>test</scope>
     </dependency>
-    
     <dependency>
       <groupId>com.talis</groupId>
       <artifactId>talis-jmx</artifactId>
@@ -102,26 +133,73 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymockclassextension</artifactId>
+      <version>2.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+	  <artifactId>log4j</artifactId>
+	  <version>1.2.15</version>
+	  <exclusions>
+	    <exclusion>
+	      <groupId>javax.mail</groupId>
+	      <artifactId>mail</artifactId>
+	    </exclusion>
+	    <exclusion>
+	      <groupId>javax.jms</groupId>
+	      <artifactId>jms</artifactId>
+	    </exclusion>
+	    <exclusion>
+	      <groupId>com.sun.jdmk</groupId>
+	      <artifactId>jmxtools</artifactId>
+	    </exclusion>
+	    <exclusion>
+	      <groupId>com.sun.jmx</groupId>
+	      <artifactId>jmxri</artifactId>
+	    </exclusion>
+	  </exclusions>
+	</dependency>
   </dependencies>
  
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-          <encoding>UTF-8</encoding>
-        </configuration>
-      </plugin>
- 
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+            <encoding>UTF-8</encoding>
+            </configuration>
+        </plugin>
+      
+        <plugin>
+         <artifactId>maven-assembly-plugin</artifactId>
+           <configuration>
+             <descriptors>
+               <descriptor>assembly.xml</descriptor>
+             </descriptors>
+           </configuration>
+           <executions>
+             <execution>
+               <id>create-assembly</id>
+                   <phase>verify</phase>
+               <goals>
+                 <goal>attached</goal>
+               </goals>
+             </execution>
+           </executions>
+         </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+            <argLine>-javaagent:${basedir}/lib/definalizer-0.1.1.jar</argLine>
+        </configuration>
       </plugin>
- 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -142,45 +220,6 @@
           </execution>
         </executions>
       </plugin>
- 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-        <configuration>
-          <linkXref>true</linkXref>
-          <sourceEncoding>utf-8</sourceEncoding>
-          <targetJdk>1.5</targetJdk>
-          <rulesets>
-            <ruleset>./pmd-ruleset.xml</ruleset>
-          </rulesets>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>prepare-package</phase> <!-- default is verify -->
-            <goals>
-              <goal>check</goal>
-              <goal>cpd-check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-         <artifactId>maven-assembly-plugin</artifactId>
-           <configuration>
-             <descriptors>
-               <descriptor>assembly.xml</descriptor>
-             </descriptors>
-           </configuration>
-           <executions>
-             <execution>
-               <id>create-assembly</id>
-                   <phase>verify</phase>
-               <goals>
-                 <goal>attached</goal>
-               </goals>
-             </execution>
-           </executions>
-         </plugin>
     </plugins>
   </build>
   

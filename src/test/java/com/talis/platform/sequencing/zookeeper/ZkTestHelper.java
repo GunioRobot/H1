@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,12 +67,14 @@ public class ZkTestHelper {
     	
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
 
-			final int PORT = getPort(hostPort);
-			NIOServerCnxn.Factory factory = new NIOServerCnxn.Factory(PORT);
+			final int port = getPort(hostPort);
+			final String host = getHost(hostPort);
+			InetSocketAddress address = new InetSocketAddress(host, port);
+			NIOServerCnxn.Factory factory = new NIOServerCnxn.Factory(address);
 			factory.startup(zks);
 
-			assertTrue("waiting for server up", waitForServerUp("127.0.0.1:"
-					+ PORT, CONNECTION_TIMEOUT));
+			assertTrue("waiting for server up", waitForServerUp(host + ":"
+					+ port, CONNECTION_TIMEOUT));
 
 			return factory;
     	}catch(IOException e){
@@ -155,6 +158,10 @@ public class ZkTestHelper {
         return false;
     }
 
+    private String getHost(String hostPort) {
+        return hostPort.split(":")[0];
+    }
+    
     private int getPort(String hostPort) {
         String portstr = hostPort.split(":")[1];
         String[] pc = portstr.split("/");

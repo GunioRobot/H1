@@ -25,7 +25,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
-import com.talis.platform.metrics.JmxMetricsReporterBase;
+import com.talis.jmx.JmxSupport;
 
 public class SequencingMetricsJmx extends JmxSupport 
 implements SequencingMetrics, SequencingMetricsJmxMBean {

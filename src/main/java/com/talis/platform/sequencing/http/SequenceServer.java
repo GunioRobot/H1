@@ -35,8 +35,7 @@ import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 public class SequenceServer {
 	private static final Logger LOG = LoggerFactory.getLogger(SequenceServer.class);
 	
-	public static final String SERVER_IDENTIFIER = 
-		String.format("H1/%s.%s", Version.release, Version.revision);
+	public static final String SERVER_IDENTIFIER = "H1 Server";
 	private static Injector INJECTOR = new NullInjector();
 	public static Injector getInjector(){
 		return INJECTOR;

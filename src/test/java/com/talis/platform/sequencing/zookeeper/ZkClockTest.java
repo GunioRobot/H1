@@ -205,8 +205,7 @@ public class ZkClockTest {
 	public void createNextSequenceForExistingKey() throws Exception{
 		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		ByteBuffer buf = ByteBuffer.wrap(ZkClock.DEFAULT_DATA);
-		System.out.println(buf.getLong());
-		System.out.println(clock.getNextSequence(key));
+		clock.getNextSequence(key);
 		assertNotNull(myKeeper.exists(key, false));
 		long sequence = clock.getNextSequence(key);
 		assertEquals(1, sequence);
