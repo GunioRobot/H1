@@ -54,7 +54,11 @@
     <repository>
         <id>talis-releases</id>
         <url>http://oss.talisplatform.com/content/repositories/talis-releases</url>
-    </repository>    
+    </repository>
+    <repository>
+        <id>talis-central-releases</id>
+        <url>http://oss.talisplatform.com/content/repositories/talis-central-releases</url>
+    </repository>        
   </repositories>
 
   
