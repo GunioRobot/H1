@@ -36,7 +36,8 @@
             <directory>${project.basedir}/lib</directory>
             <outputDirectory>/lib</outputDirectory>
             <includes>
-                <include>jmxetric-patch-0.1-patch-4.jar</include>
+                <include>jmxetric-0.0.4-patch-1.jar</include>
+                <include>oncrpc-1.0.7.jar</include>
             </includes>
         </fileSet>
 	</fileSets>

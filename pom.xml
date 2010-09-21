@@ -88,7 +88,26 @@
       <version>0.1.1</version>
       <scope>system</scope>
       <systemPath>${basedir}/lib/definalizer-0.1.1.jar</systemPath>
-    </dependency>   
+    </dependency>
+
+    <!-- JMXetric is not availably in any public Maven repo and 
+         it depends on oncrpc-1.0.7.jar.
+    -->
+    <dependency>
+      <groupId>com.specialprojectslab</groupId>
+      <artifactId>jmxetric</artifactId>
+      <version>0.0.4-patch-1</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/jmxetric-0.0.4-patch-1.jar</systemPath>
+    </dependency>
+    
+    <dependency>
+      <groupId>remotetea</groupId>
+      <artifactId>oncrpc</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/oncrpc-1.0.7.jar</systemPath>
+    </dependency>
     
     <dependency>
       <groupId>com.google.inject</groupId>
