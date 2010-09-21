@@ -217,7 +217,7 @@
            <executions>
              <execution>
                <id>create-assembly</id>
-                   <phase>verify</phase>
+                 <phase>package</phase>
                <goals>
                  <goal>attached</goal>
                </goals>
