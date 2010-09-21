@@ -67,8 +67,16 @@
       <url>http://oss.talisplatform.com/content/repositories/talis-releases</url>
     </repository>
     <repository>
+      <id>talis-oss-snapshots</id>
+      <url>http://oss.talisplatform.com/content/repositories/talis-snapshots</url>
+    </repository>
+    <repository>
       <id>talis-oss-central-releases</id>
       <url>http://oss.talisplatform.com/content/repositories/talis-central-releases</url>
+    </repository>        
+    <repository>
+      <id>talis-oss-central-snapshots</id>
+      <url>http://oss.talisplatform.com/content/repositories/talis-central-snapshots</url>
     </repository>        
   </repositories>
   
@@ -87,6 +95,12 @@
       <artifactId>guice</artifactId>
       <version>2.0</version>
     </dependency>
+
+    <dependency>
+        <groupId>aopalliance</groupId>
+        <artifactId>aopalliance</artifactId>
+        <version>1.0</version>
+    </dependency> 
     
     <dependency>
       <groupId>com.noelios.restlet</groupId>
@@ -107,25 +121,29 @@
     </dependency>
     
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.5.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.5.6</version>
-    </dependency>
-    <dependency>
-        <groupId>aopalliance</groupId>
-        <artifactId>aopalliance</artifactId>
-        <version>1.0</version>
-    </dependency> 
-    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>zookeeper</artifactId>
       <version>3.3.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+    
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -137,45 +155,25 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.7</version>
+      <version>4.8.1</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>com.talis</groupId>
       <artifactId>talis-jmx</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.3-SNAPSHOT</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.easymock</groupId>
-      <artifactId>easymockclassextension</artifactId>
-      <version>2.4</version>
+      <artifactId>easymock</artifactId>
+      <version>3.0</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-	  <artifactId>log4j</artifactId>
-	  <version>1.2.15</version>
-	  <exclusions>
-	    <exclusion>
-	      <groupId>javax.mail</groupId>
-	      <artifactId>mail</artifactId>
-	    </exclusion>
-	    <exclusion>
-	      <groupId>javax.jms</groupId>
-	      <artifactId>jms</artifactId>
-	    </exclusion>
-	    <exclusion>
-	      <groupId>com.sun.jdmk</groupId>
-	      <artifactId>jmxtools</artifactId>
-	    </exclusion>
-	    <exclusion>
-	      <groupId>com.sun.jmx</groupId>
-	      <artifactId>jmxri</artifactId>
-	    </exclusion>
-	  </exclusions>
-	</dependency>
+
   </dependencies>
  
   <build>
