@@ -47,8 +47,8 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 	public static final String CONNECTION_TIMEOUT_PROPERTY = 
 		"com.talis.platform.sequencing.zookeeper.connection.timeout";
 	
-	private String myEnsembleList;
-	private ZooKeeper myZookeeper;
+	private String ensembleList;
+	private volatile ZooKeeper zookeeper;
 	private boolean connected = false;
 
 	@Override
@@ -82,12 +82,12 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 
 	@Override
 	public ZooKeeper get(){
-		if (null == myZookeeper) {
+		if (null == zookeeper) {
 			LOG.info("No ZooKeeper instance cached");
 			synchronized (this) {
-				if (null == myZookeeper) {
+				if (null == zookeeper) {
 					try {
-						myZookeeper = newKeeperInstance();
+						zookeeper = newKeeperInstance();
 						LOG.info("Waiting for connection to zookeeper server");
 						waitForConnection();
 					} catch (IOException e) {
@@ -101,7 +101,7 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 		}else{
 			LOG.info("Returing cached ZooKeeper instance");
 		}
-		return myZookeeper;
+		return zookeeper;
 	}
 
 	private void waitForConnection() throws ZooKeeperInitialisationException {
@@ -113,23 +113,24 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 			} catch (InterruptedException e) {
 				LOG.info("Interrupted while waiting for connection");
 			}
-		}
-		if (!connected) {
-			myZookeeper = null;
-			throw new ZooKeeperInitialisationException("Connection timed out or interrupted");
+			
+			if (!connected) {
+				zookeeper = null;
+				throw new ZooKeeperInitialisationException("Connection timed out or interrupted");
+			}
 		}
 	}
 
 	public String getEnsembleList() throws IOException {
-		if (null == myEnsembleList) {
-			myEnsembleList = readEnsembleList();
+		if (null == ensembleList) {
+			ensembleList = readEnsembleList();
 		}
-		return myEnsembleList;
+		return ensembleList;
 	}
 
-	public void reset() {
-		myEnsembleList = null;
-		myZookeeper = null;
+	public synchronized void reset() {
+		ensembleList = null;
+		zookeeper = null;
 	}
 
 	private String readEnsembleList() throws IOException {

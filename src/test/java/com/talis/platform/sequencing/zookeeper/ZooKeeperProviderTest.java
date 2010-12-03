@@ -126,21 +126,37 @@ public class ZooKeeperProviderTest {
 		final ZooKeeperProvider provider = new ZooKeeperProvider();
 		final long waitPeriod = 300; 
 		class Tuple{
-			long time1;
-			long time2;
-			ZooKeeper client;
+			volatile long time1;
+			volatile long time2;
+			volatile ZooKeeper client;
+			@Override
+			public String toString() {
+				StringBuffer buf = new StringBuffer();
+				buf.append( super.toString() );
+				buf.append(" [time1: ");
+				buf.append(time1);
+				buf.append(" ,time2: ");
+				buf.append(time2);
+				buf.append("]");
+				
+				return buf.toString();
+			}
+			
+			public long getTimeDifference() {
+				return time2 - time1;
+			}
 		}
 	
 		Callable<Tuple> requester = new Callable<Tuple>(){
 			@Override
 			public Tuple call() {
 				Tuple t = new Tuple();
-				t.time1 = System.currentTimeMillis();
 				try {
 					t.time1 = System.currentTimeMillis();
 					t.client = provider.get();
 					t.time2 = System.currentTimeMillis();
 				} catch (ZooKeeperInitialisationException e) {
+					e.printStackTrace();
 					fail("Caught unexpected exception");
 				}
 				return t;
@@ -159,6 +175,9 @@ public class ZooKeeperProviderTest {
 		Tuple t = future.get();
 		assertNotNull(t.client);
 		t.client.close();
+		
+		System.out.println(t);
+		System.out.println("Time difference: " + t.getTimeDifference() );
 	
 		assertTrue( (t.time2 - t.time1) >= waitPeriod);
 	}

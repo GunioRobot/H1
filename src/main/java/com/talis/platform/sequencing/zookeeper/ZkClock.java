@@ -37,13 +37,13 @@ public class ZkClock implements Clock {
 
 	static final Logger LOG = LoggerFactory.getLogger(ZkClock.class);
 
-	public static final byte[] DEFAULT_DATA = ByteBuffer.allocate(8)
+	static final byte[] DEFAULT_DATA = ByteBuffer.allocate(8)
 			.putLong(-1).array();
-	public static final List<ACL> DEFAULT_ACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
+	static final List<ACL> DEFAULT_ACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
 
-	public static final String RETRY_DELAY_PROPERTY = 
+	static final String RETRY_DELAY_PROPERTY = 
 			"com.talis.platform.sequencing.zookeeper.retrydelay";
-	public static final String RETRY_COUNT_PROPERTY = 
+	static final String RETRY_COUNT_PROPERTY = 
 			"com.talis.platform.sequencing.zookeeper.retrycount";
 
 	private final ZooKeeper myZooKeeper;
