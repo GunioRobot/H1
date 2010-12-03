@@ -391,6 +391,9 @@ public class ZkClockTest {
 		long start = System.currentTimeMillis();
 		for (int i = 0 ; i < iterations ; i++){
 			seq = clock.getNextSequence(key);
+			if (i % 10000 == 0) {
+				System.out.print(".");
+			}
 		}
 		long end = System.currentTimeMillis();
 		System.out.println(String.format("Made %s increments in %s ms", iterations, (end - start)));
