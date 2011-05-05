@@ -281,6 +281,63 @@
           <autoVersionSubmodules>true</autoVersionSubmodules>
         </configuration>
       </plugin>
+      
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.5</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <!-- here the phase you need -->
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/control</outputDirectory>
+              <resources> 
+ 		<resource>
+        	<directory>src/main/deb/control</directory>
+        	<filtering>true</filtering>
+      		</resource>         
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+	</plugin>
+  	
+  	
+  	<plugin>
+        <artifactId>jdeb</artifactId>
+        <groupId>org.vafer</groupId>
+        <version>0.8</version>
+        <executions>
+            <execution>
+                <phase>verify</phase>
+                <goals>
+                    <goal>jdeb</goal>
+                </goals>
+                <configuration>
+		            <controlDir>${project.build.directory}/control</controlDir>
+                    <dataSet>
+                        <data>
+                            <src>${project.build.directory}/${project.build.finalName}.tar.gz</src>
+                            <type>archive</type>
+                            <mapper>
+                              <type>perm</type>
+                              <prefix>/opt/h1</prefix>
+                            </mapper>
+                        </data>
+                        <data>
+                            <src>${basedir}/src/main/deb</src>
+                            <type>directory</type>
+                            <excludes>control/**</excludes>
+                        </data>
+                    </dataSet>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
 
     </plugins>
 

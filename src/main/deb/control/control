@@ -1,0 +1,8 @@
+Package: H1
+Version: ${project.version}
+Priority: extra
+Architecture: all
+Maintainer: Talis Systems Ltd
+Section: utils
+Depends: base-passwd, adduser (>= 3.11)
+Description: H1
