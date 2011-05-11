@@ -4,7 +4,7 @@
 
 start() {
   cd /opt/h1
-  if [ -e /opt/h1/h1-node.pid ]; then
+  if [ -s /var/run/h1-node.pid ]; then
     echo "H1 Server process already running, use stop or restart."
     exit
   fi
@@ -14,12 +14,12 @@ start() {
 
 stop() {
   cd /opt/h1
-  if [ ! -e /opt/h1/h1-node.pid ]; then
+  if [ ! -s /var/run/h1-node.pid ]; then
     echo "H1 Server is not running."
     exit
   fi
-  kill `cat /opt/h1/h1-node.pid 2>/dev/null`
-  rm -f /opt/h1/h1-node.pid
+  kill `cat /var/run/h1-node.pid 2>/dev/null`
+  rm -f /var/run/h1-node.pid
 }
 
 

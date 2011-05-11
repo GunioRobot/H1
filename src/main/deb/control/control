@@ -1,4 +1,4 @@
-Package: H1
+Package: h1
 Version: ${project.version}
 Priority: extra
 Architecture: all

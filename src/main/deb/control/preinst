@@ -4,9 +4,9 @@ case "$1" in
     install|upgrade)
     # Sane defaults:
      
-    [ -z "$SERVER_HOME" ] && SERVER_HOME=/opt/H1
+    [ -z "$SERVER_HOME" ] && SERVER_HOME=/opt/h1
     [ -z "$SERVER_USER" ] && SERVER_USER=h1
-    [ -z "$SERVER_NAME" ] && SERVER_NAME="H1 User"
+    [ -z "$SERVER_NAME" ] && SERVER_NAME="h1 User"
     [ -z "$SERVER_GROUP" ] && SERVER_GROUP=h1
      
     # Groups that the user will be added to, if undefined, then none.
@@ -29,6 +29,7 @@ case "$1" in
               --ingroup $SERVER_GROUP \
               --no-create-home \
               --disabled-password \
+              --shell /bin/bash
               $SERVER_USER 2>/dev/null || true
       echo "..done"
     fi

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 /bin/chown -R h1:h1 /opt/h1
-/opt/h1/install_h1_service.sh
+/bin/chmod +x /etc/init.d/h1-node
