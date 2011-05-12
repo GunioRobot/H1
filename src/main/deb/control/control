@@ -5,4 +5,4 @@ Architecture: all
 Maintainer: Talis Systems Ltd
 Section: utils
 Depends: base-passwd, adduser (>= 3.11)
-Description: H1
+Description: H1 Sequence Server

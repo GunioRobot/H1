@@ -29,7 +29,7 @@ case "$1" in
               --ingroup $SERVER_GROUP \
               --no-create-home \
               --disabled-password \
-              --shell /bin/bash
+              --shell /bin/bash \
               $SERVER_USER 2>/dev/null || true
       echo "..done"
     fi
