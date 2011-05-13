@@ -9,7 +9,7 @@
     </appender>
     
     <appender name="fileout" class="org.apache.log4j.FileAppender"> 
-        <param name="File" value="/var/log/h1.log"/> 
+        <param name="File" value="/var/log/h1/h1.fifo"/> 
         <layout class="org.apache.log4j.PatternLayout"> 
             <param name="ConversionPattern" value="%d{ISO8601} -%5p %-25c{1} :%t:%m%n"/> 
         </layout> 
