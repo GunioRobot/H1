@@ -22,7 +22,7 @@
     </appender>
     
     <logger name="com.talis">
-        <level value="DEBUG"/> 
+        <level value="WARN"/> 
     </logger> 
 
     <root> 
