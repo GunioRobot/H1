@@ -16,54 +16,41 @@
 
 package com.talis.platform.sequencing.http;
 
+import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+
 import org.restlet.Component;
 import org.restlet.VirtualHost;
 import org.restlet.data.Protocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
+import com.google.inject.Module;
 import com.talis.platform.NullInjector;
-import com.talis.platform.SystemTimestampProvider;
-import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
-import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 
 public class SequenceServer {
 	private static final Logger LOG = LoggerFactory.getLogger(SequenceServer.class);
 	
+	public static final int DEFAULT_PORT = 9595;
 	public static final String SERVER_IDENTIFIER = "H1 Server";
+	
 	private static Injector INJECTOR = new NullInjector();
 	public static Injector getInjector(){
 		return INJECTOR;
 	}
 
-	public static Injector initInjector(){
-		return Guice.createInjector(
-				new ZooKeeperModule(),
-				new AbstractModule(){
-					@Override
-					protected void configure() {
-						bind(TimestampProvider.class)
-							.to(SystemTimestampProvider.class)
-							.in(Scopes.SINGLETON);
-					}
-				});
+	private Component myWebserver;
+	
+	public SequenceServer(Injector injector){
+		INJECTOR = injector;
 	}
 	
-	public static void main(String[] args) {
-		int port = 9595;
-		if (args.length > 0){
-			port = Integer.parseInt(args[0]);
-		}
-		LOG.info("Starting Service on port %s port");
-		
-		INJECTOR = initInjector();
+	public void startWebserver(int port) throws Exception{
 		INJECTOR.getInstance(SequencingMetrics.class);
-		Component myWebserver = new Component();
+		myWebserver = new Component();
 	    myWebserver.getLogService().setEnabled(false);
 	    myWebserver.getServers().add(Protocol.HTTP, port);
 	    VirtualHost defaultHost = myWebserver.getDefaultHost();
@@ -71,13 +58,32 @@ public class SequenceServer {
 	    SequencingApplication sequencingApplication = 
 	    	new SequencingApplication();
 	    defaultHost.attach(sequencingApplication);
-	        
+	    myWebserver.start();
+	}
+	
+	
+	public static void main(String[] args) {
+		int port = DEFAULT_PORT;
+		if (args.length > 0){
+			port = Integer.parseInt(args[0]);
+		}
+		LOG.info("Starting Service on port %s port");
+		
+		Injector injector = 
+			Guice.createInjector(ServiceLoader.load(Module.class));
+		
 	    try{
-	    	myWebserver.start();    
+	    	new SequenceServer(injector).startWebserver(port);
 	    }catch(Exception e){
 	    	LOG.error("Unable to start webserver", e);
 	    }
 	    LOG.info("Service Started");
+	    
+	    try{
+	    	new CountDownLatch(1).await();
+	    }catch(Exception e){
+	    	LOG.error("Server shutdown unexpectedly", e);
+	    }
 	}
 
 }

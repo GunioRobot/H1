@@ -382,52 +382,6 @@ public class ZkClockTest {
 			verify(mockMetrics);
 		}
 	}
-		
-	@Test @Ignore
-	public void testManyIterations() throws Exception{
-		int iterations = 1000000;
-		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
-		long seq = 0;
-		long start = System.currentTimeMillis();
-		for (int i = 0 ; i < iterations ; i++){
-			seq = clock.getNextSequence(key);
-			if (i % 10000 == 0) {
-				System.out.print(".");
-			}
-		}
-		long end = System.currentTimeMillis();
-		System.out.println(String.format("Made %s increments in %s ms", iterations, (end - start)));
-		assertEquals(iterations, seq + 1);
-	}
-	
-	@Test @Ignore
-	public void testConcurrentClients() throws Exception{
-		int iterations = 10000;
-		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
-
-		CountDownLatch startGate = new CountDownLatch(1);
-		CountDownLatch endGate = new CountDownLatch(5);
-		new Thread(new Driver("/first-key", clock, iterations, startGate, endGate)).start();
-		new Thread(new Driver("/second-key", clock, iterations, startGate, endGate)).start();
-		new Thread(new Driver("/third-key", clock, iterations, startGate, endGate)).start();
-		new Thread(new Driver("/fourth-key", clock, iterations, startGate, endGate)).start();
-		new Thread(new Driver("/first-key", clock, iterations, startGate, endGate)).start();
-		
-		LOG.info("Waiting before starting 5 threads each doing " 
-							+ iterations + " iterations (2 contending)");
-		Thread.sleep(1000);
-		long start = System.currentTimeMillis();
-		startGate.countDown();
-		endGate.await();
-		long end = System.currentTimeMillis();
-		LOG.info("Done in :" + (end - start) + " ms");
-		
-		assertEquals((2 * iterations) , clock.getNextSequence("/first-key") );
-		assertEquals(iterations, clock.getNextSequence("/second-key") );
-		assertEquals(iterations, clock.getNextSequence("/third-key") );
-		assertEquals(iterations, clock.getNextSequence("/fourth-key") );
-		
-	}
 	
 	private ZooKeeperProvider getProviderForZooKeeper(final ZooKeeper keeper){
 		return new ZooKeeperProvider(){
@@ -444,40 +398,7 @@ public class ZkClockTest {
 		return buf.getLong();
 	}
 	
-	private class Driver implements Runnable{
-		ZkClock clock;
-		int iterations;
-		String key;
-		CountDownLatch startGate;
-		CountDownLatch endGate;
-		long sequence;
-		
-		Driver(String key, ZkClock clock, int iterations, 
-				CountDownLatch startGate, CountDownLatch endGate){
-			this.key = key;
-			this.clock = clock;
-			this.iterations = iterations;
-			this.startGate = startGate;
-			this.endGate = endGate;
-		}
-		
-		@Override
-		public void run() {
-			try{
-				startGate.await();
-				LOG.info("Running test");
-				for (int i = 0; i < iterations; i++){
-					sequence = clock.getNextSequence(key);
-				}
-				LOG.info("Test finished");
-				endGate.countDown();
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	class NullMetrics implements ZooKeeperMetrics{
+	static class NullMetrics implements ZooKeeperMetrics{
 		@Override
 		public void incrementKeyCollisions() {}
 

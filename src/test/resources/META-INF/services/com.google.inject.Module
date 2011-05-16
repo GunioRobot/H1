@@ -1,0 +1,2 @@
+com.talis.platform.sequencing.BaseModule
+com.talis.platform.sequencing.redis.RedisModule
