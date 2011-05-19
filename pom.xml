@@ -205,6 +205,67 @@
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>ant-version-properties</id>
+            <phase>generate-resources</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="${project.basedir}/target"/>
+                <tstamp>
+                  <format property="build.time.xsd"  pattern="yyyy-MM-dd'T'HH:mm:ssZ"/>
+                  <format property="build.time.txt"  pattern="yyyy-MM-dd HH:mm z"/>
+                </tstamp>
+                <exec executable="/usr/bin/git" spawn="false" dir="." outputproperty="repository.version">
+                  <arg line="rev-parse HEAD"/>
+                </exec>
+                <condition property="build.number" value="${env.BUILD_NUMBER}" else="dev-${user.name}">
+                  <isset property="env.BUILD_NUMBER" />
+                </condition>
+                <!-- Do not indent (it does not work) -->
+                <echo file="${project.basedir}/target/filter.properties">
+#begin
+build.time.xsd=${build.time.xsd}
+build.time.txt=${build.time.txt}
+build.number=${build.number}
+repository.version=${repository.version}
+#end
+                </echo>
+                <echo message="version=${project.version}"/>
+                <echo message="build.time=${build.time.txt}"/>
+                <echo message="build.number=${build.number}"/>
+                <echo message="repository.version=${repository.version}"/>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0-alpha-2</version>
+        <executions>
+          <execution>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>${project.basedir}/target/filter.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <source>${jdk.version}</source>
