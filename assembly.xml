@@ -11,7 +11,7 @@
 		<dependencySet>
 			<unpack>false</unpack>
 			<outputDirectory>/lib</outputDirectory>
-      <fileMode>0644</fileMode>
+            <fileMode>0644</fileMode>
 		</dependencySet>
 	</dependencySets>
 	<fileSets>

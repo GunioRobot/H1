@@ -42,6 +42,39 @@
     <url>http://github.com/talisplatform/H1</url>
   </scm>
 
+  <profiles>
+   <profile>
+   <id>upload-debian-package</id>
+    <build>
+     <plugins>
+       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>rsync-debian-package</id>
+            <phase>verify</phase>
+            <configuration>
+               <tasks>
+                  <exec executable="/usr/bin/rsync" spawn="false" dir="${project.build.directory}" failonerror="true">
+                     <arg line="-avz"/>
+                     <arg line="-e '/usr/bin/ssh -i ${ssh-key}'"/>
+                     <arg line="${project.build.finalName}-${build.number}.deb"/>
+                     <arg line="${ssh-user}@${repository}:/var/repository/drop"/>
+                  </exec>
+               </tasks>
+            </configuration>
+            <goals>
+                <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+     </plugins>
+    </build>          
+   </profile>
+  </profiles>
+
   <distributionManagement>
     <repository>
       <id>talis-oss-releases</id>
@@ -269,12 +302,13 @@
         <version>0.8</version>
         <executions>
             <execution>
-                <phase>verify</phase>
+                <phase>integration-test</phase>
                 <goals>
                     <goal>jdeb</goal>
                 </goals>
                 <configuration>
 		            <controlDir>${project.build.directory}/control</controlDir>
+		            <deb>${project.build.directory}/${project.build.finalName}-${build.number}.deb</deb>
                     <dataSet>
                         <data>
                             <src>${project.build.directory}/${project.build.finalName}.tar.gz</src>
