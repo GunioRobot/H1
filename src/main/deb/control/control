@@ -1,8 +1,8 @@
 Package: h1
-Version: ${project.version}
+Version: ${project.version}-${build.number}
 Priority: extra
 Architecture: all
 Maintainer: Talis Systems Ltd
 Section: utils
 Depends: base-passwd, adduser (>= 3.11)
-Description: H1 Sequence Server
+Description: H1 Sequence Web Server
