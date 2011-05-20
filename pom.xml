@@ -77,13 +77,13 @@
     <dependency>
       <groupId>com.noelios.restlet</groupId>
       <artifactId>com.noelios.restlet</artifactId>
-      <version>1.1.4</version>
+      <version>1.1.5</version>
     </dependency>
 
     <dependency>
       <groupId>com.noelios.restlet</groupId>
       <artifactId>com.noelios.restlet.ext.simple</artifactId>
-      <version>1.1.4</version>
+      <version>1.1.5</version>
     </dependency>    
 
     <dependency>
@@ -294,6 +294,29 @@
             </execution>
         </executions>
     </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>com.talis.platform.sequencing.http.SequenceServer</mainClass>
+          <systemProperties>
+            <systemProperty>
+              <key>com.talis.platform.sequencing.zookeeper.servers</key>
+              <value>${project.basedir}/exec-resources/myzkservers</value>
+            </systemProperty>
+          </systemProperties>
+	      <classpathScope>test</classpathScope>
+        </configuration>
+      </plugin>
 
     </plugins>
 
