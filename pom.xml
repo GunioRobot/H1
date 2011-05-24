@@ -406,7 +406,7 @@ repository.version=${repository.version}
           <systemProperties>
             <systemProperty>
               <key>com.talis.platform.sequencing.zookeeper.servers</key>
-              <value>${project.basedir}/exec-resources/myzkservers</value>
+              <value>${project.basedir}src/test/resources/exec-resources/myzkservers</value>
             </systemProperty>
           </systemProperties>
 	      <classpathScope>test</classpathScope>
