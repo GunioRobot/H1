@@ -58,7 +58,7 @@
                <tasks>
                   <exec executable="/usr/bin/rsync" spawn="false" dir="${project.build.directory}" failonerror="true">
                      <arg line="-avz"/>
-                     <arg line="-e '/usr/bin/ssh -i ${ssh-key}'"/>
+                     <arg line="-e '/usr/bin/ssh -i ${ssh-key} -o StrictHostKeyChecking=no'"/>
                      <arg line="${project.build.finalName}-${build.number}.deb"/>
                      <arg line="${ssh-user}@${repository}:/var/repository/drop"/>
                   </exec>
