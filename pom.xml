@@ -25,7 +25,7 @@
   </developers>
  
   <properties>
-    <talis-jmx.version>1.0.3-SNAPSHOT</talis-jmx.version>
+    <talis-jmx.version>1.0.5</talis-jmx.version>
     <jdk.version>1.6</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>

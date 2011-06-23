@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE jmxetric-config [
+       <!ELEMENT jmxetric-config (sample|ganglia|jvm)*>
+       <!ELEMENT sample (mbean)*>
+          <!ATTLIST sample delay CDATA #REQUIRED>
+          <!ATTLIST sample initialdelay CDATA "0">
+       <!ELEMENT mbean (attribute)*>
+          <!ATTLIST mbean name CDATA #REQUIRED>
+          <!ATTLIST mbean pname CDATA #REQUIRED>
+       <!ELEMENT attribute (composite*)>
+          <!ATTLIST attribute name CDATA #REQUIRED>
+          <!ATTLIST attribute type CDATA "" >
+          <!ATTLIST attribute units CDATA "" >
+          <!ATTLIST attribute pname CDATA "" >
+          <!ATTLIST attribute slope CDATA "both" >
+       <!ELEMENT composite EMPTY>
+          <!ATTLIST composite name CDATA #REQUIRED>
+          <!ATTLIST composite type CDATA "" >
+          <!ATTLIST composite units CDATA "" >
+          <!ATTLIST composite pname CDATA "" >
+          <!ATTLIST composite slope CDATA "both" >
+       <!ELEMENT ganglia EMPTY>
+          <!ATTLIST ganglia hostname CDATA #REQUIRED>
+          <!ATTLIST ganglia port CDATA #REQUIRED>
+          <!ATTLIST ganglia mode CDATA #REQUIRED>
+          <!ATTLIST ganglia wireformat31x CDATA #REQUIRED>
+       <!ELEMENT jvm EMPTY>
+          <!ATTLIST jvm process CDATA "">
+    ]>
+<jmxetric-config>
+	<jvm process="JVM" />
+	<sample delay="15">
+
+		<mbean name="java.lang:type=Memory" pname="Memory">
+			<attribute name="HeapMemoryUsage" 
+                        type="" 
+                        units="" 
+                        pname=""
+                        slope="both">
+				<composite name="init" 
+				            pname="Heap_init" 
+				            type="int32"
+                            units="bytes" 
+                            slope="both" />
+				<composite name="committed" 
+				            pname="Heap_committed"
+                            type="int32" 
+                            units="bytes" 
+                            slope="both" />
+				<composite name="used" 
+				            pname="Heap_used" 
+				            type="int32"
+                            units="bytes" 
+                            slope="both" />
+				<composite name="max" 
+				            pname="Heap_max" 
+				            type="int32"
+                            units="bytes" 
+                            slope="both" />
+			</attribute>
+			
+			<attribute name="NonHeapMemoryUsage" 
+                        type="" 
+                        units=""
+				        pname="" 
+				        slope="both">
+				<composite name="init" 
+                            pname="NonHeap_init" 
+                            type="int32"
+                            units="bytes" 
+                            slope="both" />
+				<composite name="committed" 
+                            pname="NonHeap_committed"
+                            type="int32" 
+                            units="bytes" 
+                            slope="both" />
+				<composite name="used" 
+                            pname="NonHeap_used" 
+                            type="int32"
+                            units="bytes" 
+                            slope="both" />
+				<composite name="max" 
+                            pname="NonHeap_max" 
+                            type="int32"
+                            units="bytes" 
+                            slope="both" />
+			</attribute>
+		</mbean>
+
+		<mbean name="java.lang:type=Threading" pname="Threading">
+			<attribute name="ThreadCount" 
+                        type="int16" 
+                        units="" 
+                        pname=""
+				        slope="both" />
+				        
+			<attribute name="DaemonThreadCount" 
+                        type="int16" 
+                        units=""
+				        pname="" 
+				        slope="both" />
+		</mbean>
+		
+		<mbean name="java.lang:type=GarbageCollector,name=ConcurrentMarkSweep" pname="ConcurrentMarkSweep">
+		  <attribute name="LastGcInfo" 
+		             type="" 
+		             units="" 
+		             pname=""
+		             slope="both">
+		    <composite name="duration" 
+		               pname="duration" 
+		               type="int32"
+		               units="ms" 
+		               slope="both" />
+		  </attribute>
+		</mbean>
+		<mbean name="java.lang:type=GarbageCollector,name=ParNew" pname="ParNew">
+		  <attribute name="LastGcInfo" 
+		             type="" 
+		             units="" 
+		             pname=""
+		             slope="both">
+		    <composite name="duration" 
+		               pname="duration" 
+		               type="int32"
+		               units="ms" 
+		               slope="both" />
+		  </attribute>
+		</mbean>
+		<mbean name="java.lang:type=GarbageCollector,name=PS MarkSweep" pname="PSMarkSweep">
+		  <attribute name="LastGcInfo" 
+		             type="" 
+		             units="" 
+		             pname=""
+		             slope="both">
+		    <composite name="duration" 
+		               pname="duration" 
+		               type="int32"
+		               units="ms" 
+		               slope="both" />
+		  </attribute>
+		</mbean>
+		<mbean name="java.lang:type=GarbageCollector,name=PS Scavenge" pname="PSScavenge">
+		  <attribute name="LastGcInfo" 
+		             type="" 
+		             units="" 
+		             pname=""
+		             slope="both">
+		    <composite name="duration" 
+		               pname="duration" 
+		               type="int32"
+		               units="ms" 
+		               slope="both" />
+		  </attribute>
+		</mbean>	
+   		<mbean name="com.talis:name=ZkSequencingMetrics1" pname="writes">
+            <attribute name="WriteSequenceOperations" 
+                        pname="WriteSequenceOperations" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+			<attribute name="AverageWriteSequenceLatency" 
+                        pname="AverageWriteSequenceLatency" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+			<attribute name="MinWriteSequenceLatency" 
+                        pname="MinWriteSequenceLatency" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="MaxWriteSequenceLatency" 
+                        pname="MaxWriteSequenceLatency" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="ErrorResponseCount" 
+                        pname="ErrorResponseCount" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+   		</mbean>
+   		<mbean name="com.talis:name=ZkSequencingMetrics1" pname="zookeeper">
+            <attribute name="KeyCollisions" 
+                        pname="KeyCollisions" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="KeyCreations" 
+                        pname="KeyCreations" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="ConnectionLossEvents" 
+                        pname="ConnectionLossEvents" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="SessionExpiredEvents" 
+                        pname="SessionExpiredEvents" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="InterruptedExceptions" 
+                        pname="InterruptedExceptions" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="KeeperExceptions" 
+                        pname="KeeperExceptions" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+   		</mbean>
+	</sample>
+</jmxetric-config>
