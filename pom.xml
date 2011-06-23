@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.talis.platform</groupId>
   <artifactId>h1</artifactId>
-  <version>1.0.8-SNAPSHOT</version>
+  <version>1.0.8</version>
   <packaging>jar</packaging>
 
   <name>H1 Sequence Server</name>
@@ -218,13 +217,13 @@
             <phase>generate-resources</phase>
             <configuration>
               <tasks>
-                <mkdir dir="${project.basedir}/target"/>
+                <mkdir dir="${project.basedir}/target" />
                 <tstamp>
-                  <format property="build.time.xsd"  pattern="yyyy-MM-dd'T'HH:mm:ssZ"/>
-                  <format property="build.time.txt"  pattern="yyyy-MM-dd HH:mm z"/>
+                  <format property="build.time.xsd" pattern="yyyy-MM-dd'T'HH:mm:ssZ" />
+                  <format property="build.time.txt" pattern="yyyy-MM-dd HH:mm z" />
                 </tstamp>
                 <exec executable="/usr/bin/git" spawn="false" dir="." outputproperty="repository.version">
-                  <arg line="rev-parse HEAD"/>
+                  <arg line="rev-parse HEAD" />
                 </exec>
                 <condition property="build.number" value="${env.BUILD_NUMBER}" else="dev-${user.name}">
                   <isset property="env.BUILD_NUMBER" />
@@ -238,10 +237,10 @@ build.number=${build.number}
 repository.version=${repository.version}
 #end
                 </echo>
-                <echo message="version=${project.version}"/>
-                <echo message="build.time=${build.time.txt}"/>
-                <echo message="build.number=${build.number}"/>
-                <echo message="repository.version=${repository.version}"/>
+                <echo message="version=${project.version}" />
+                <echo message="build.time=${build.time.txt}" />
+                <echo message="build.number=${build.number}" />
+                <echo message="repository.version=${repository.version}" />
               </tasks>
             </configuration>
             <goals>
