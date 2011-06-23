@@ -78,11 +78,11 @@
 
   <distributionManagement>
     <repository>
-      <id>talis-oss-releases</id>
+      <id>talis-releases</id>
       <url>http://oss.talisplatform.com/content/repositories/talis-releases</url>
     </repository>
     <snapshotRepository>
-      <id>talis-oss-snapshots</id>
+      <id>talis-snapshots</id>
       <url>http://oss.talisplatform.com/content/repositories/talis-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
