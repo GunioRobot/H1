@@ -38,6 +38,7 @@
   </licenses>
 
   <scm>
+    <developerConnection>scm:git:ssh://git@github.com/talis/H1.git</developerConnection>
     <connection>scm:git:git://github.com/talis/H1.git</connection>
     <url>http://github.com/talis/H1</url>
   </scm>
