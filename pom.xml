@@ -5,7 +5,7 @@
 
   <groupId>com.talis.platform</groupId>
   <artifactId>h1</artifactId>
-  <version>1.0.7</version>
+  <version>1.0.8-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>H1 Sequence Server</name>
@@ -38,41 +38,41 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git://github.com/talisplatform/H1.git</connection>
-    <url>http://github.com/talisplatform/H1</url>
+    <connection>scm:git:git://github.com/talis/H1.git</connection>
+    <url>http://github.com/talis/H1</url>
   </scm>
 
   <profiles>
-   <profile>
-   <id>upload-debian-package</id>
-    <build>
-     <plugins>
-       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>rsync-debian-package</id>
-            <phase>verify</phase>
-            <configuration>
-               <tasks>
-                  <exec executable="/usr/bin/rsync" spawn="false" dir="${project.build.directory}" failonerror="true">
-                     <arg line="-avz"/>
-                     <arg line="-e '/usr/bin/ssh -i ${ssh-key}'"/>
-                     <arg line="${project.build.finalName}-${build.number}.deb"/>
-                     <arg line="${ssh-user}@${repository}:/var/repository/drop"/>
-                  </exec>
-               </tasks>
-            </configuration>
-            <goals>
-                <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-     </plugins>
-    </build>          
-   </profile>
+    <profile>
+      <id>upload-debian-package</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>rsync-debian-package</id>
+                <phase>verify</phase>
+                <configuration>
+                  <tasks>
+                    <exec executable="/usr/bin/rsync" spawn="false" dir="${project.build.directory}" failonerror="true">
+                      <arg line="-avz" />
+                      <arg line="-e '/usr/bin/ssh -i ${debian.repository.host.keypath} -o StrictHostKeyChecking=no'" />
+                      <arg line="${project.build.finalName}-${build.number}.deb" />
+                      <arg line="${debian.repository.user}@${debian.repository.host}:/var/repository/drop" />
+                    </exec>
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <distributionManagement>
