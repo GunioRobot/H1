@@ -41,6 +41,7 @@ import org.restlet.resource.StringRepresentation;
 
 import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.Clock;
+import com.talis.platform.sequencing.NoSuchSequenceException;
 import com.talis.platform.sequencing.SequencingException;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
 
@@ -87,7 +88,7 @@ public class SequenceTest {
     public void getIsNotAnAllowedMethod(){
     	Sequence resource = new Sequence(context, request, 
 			   								createNiceMock(Response.class));
-        assertFalse(resource.allowGet());
+        assertTrue(resource.allowGet());
     }
 
     @Test
@@ -176,6 +177,28 @@ public class SequenceTest {
 	}
 	
 	@Test
+	public void return500IfClockThrowsExceptionDuringRead() throws Exception{ 
+		Clock clock = createStrictMock(Clock.class);
+		expect(clock.getSequence(key))
+				.andThrow(new RuntimeException("BANG!"));
+		replay(clock);
+		
+		response = createStrictMock(Response.class);
+		expect(response.getServerInfo()).andReturn(serverInfo);
+		response.setStatus(Status.SERVER_ERROR_INTERNAL, "Internal Error");
+        response.setEntity( eqStringRepresentation( 
+        					new StringRepresentation("BANG!") ) ) ;
+        replay(response);
+
+		Sequence resource = new Sequence(context, request, response);
+		resource.setClock(clock);
+		resource.handleGet();
+		
+		verify(request);
+		verify(response);		
+	}
+	
+	@Test
 	public void incrementClockErrorsViaMetricsObject() 
 	throws Exception{
 		Clock clock = createNiceMock(Clock.class);
@@ -198,6 +221,50 @@ public class SequenceTest {
 		resource.handlePost();
 		
 		verify(mockMetrics);
+	}
+	
+    @Test
+	public void getUsesClockToGetValue() 
+	throws SequencingException{
+		Clock clock = createStrictMock(Clock.class);
+		expect(clock.getSequence(key)).andReturn(999l);
+		replay(clock);
+		
+		response = createStrictMock(Response.class);
+		expect(response.getServerInfo()).andReturn(serverInfo);
+        response.setEntity( eqStringRepresentation( 
+        					new StringRepresentation("999") ) ) ;
+        replay(response);
+
+		Sequence resource = new Sequence(context, request, response);
+		resource.setClock(clock);
+		resource.handleGet();
+		
+		verify(request);
+		verify(response);
+	}
+    
+    @Test
+	public void getReturns404WhenNoSuchSequenceExceptionIsThrown() 
+	throws SequencingException{
+		Clock clock = createStrictMock(Clock.class);
+		Exception ex = new NoSuchSequenceException("BOOM!", null);
+		expect(clock.getSequence(key)).andThrow(ex);
+		replay(clock);
+		
+		response = createStrictMock(Response.class);
+		expect(response.getServerInfo()).andReturn(serverInfo);
+		response.setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+        response.setEntity( eqStringRepresentation( 
+        					new StringRepresentation(ex.getMessage()) ) ) ;
+        replay(response);
+
+		Sequence resource = new Sequence(context, request, response);
+		resource.setClock(clock);
+		resource.handleGet();
+		
+		verify(request);
+		verify(response);
 	}
 	
 	public static StringRepresentation eqStringRepresentation(

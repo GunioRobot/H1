@@ -27,6 +27,7 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -48,6 +49,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.talis.platform.sequencing.NoSuchSequenceException;
 import com.talis.platform.sequencing.SequencingException;
 import com.talis.platform.sequencing.zookeeper.metrics.ZooKeeperMetrics;
 
@@ -92,7 +94,7 @@ public class ZkClockTest {
 		long sequence = clock.getNextSequence(key);
 		assertEquals(0, sequence);
 		assertNotNull(myKeeper.exists(key, false));
-		assertEquals(sequence, getNodeDataAsLong(key));
+		assertCurrentStateAs(sequence);
 	}
 	
 	@Test
@@ -209,7 +211,7 @@ public class ZkClockTest {
 		assertNotNull(myKeeper.exists(key, false));
 		long sequence = clock.getNextSequence(key);
 		assertEquals(1, sequence);
-		assertEquals(sequence, getNodeDataAsLong(key));
+		assertCurrentStateAs(sequence);
 	}
 		
 	@Test
@@ -429,6 +431,72 @@ public class ZkClockTest {
 		
 	}
 	
+	@Test
+	public void getSequenceForKey() throws Exception{
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
+		assertNull(myKeeper.exists(key, false));
+		
+		long sequence = clock.getNextSequence(key);
+		assertEquals(0, sequence);
+
+		long current = clock.getSequence(key);
+		assertEquals(sequence, current);
+		assertCurrentStateAs(current);
+		
+		sequence = clock.getNextSequence(key);
+		assertEquals(1, sequence);
+
+		current = clock.getSequence(key);
+		assertEquals(sequence, current);
+		assertCurrentStateAs(current);
+	}
+	
+	@Test(expected = NoSuchSequenceException.class)
+	public void getUnknownKeyThrowsNoSuchSequenceException() throws Exception{
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
+		assertNull(myKeeper.exists(key, false));
+		try {
+			clock.getSequence(key);
+			fail();
+		} catch (NoSuchSequenceException e) {
+			assertEquals(String.format(ZkClock.NOT_FOUND_FORMAT, key), e.getMessage());
+			throw e;
+		}
+	}
+	
+	@Test(expected = SequencingException.class)
+	public void getSequenceWrapsInteruptedException() throws Exception{
+		Exception ex = new InterruptedException();
+		assertClockWrapsException(ex);
+	}
+	
+	@Test(expected = SequencingException.class)
+	public void getSequenceWrapsGeneralKeeperException() throws Exception{
+		Exception ex = createStrictMock(KeeperException.class);
+		assertClockWrapsException(ex);
+	}
+
+	private void assertClockWrapsException(Exception ex)
+			throws KeeperException, InterruptedException, SequencingException {
+		ZooKeeper mockKeeper = createStrictMock(ZooKeeper.class);
+		Stat stat = new Stat();
+		mockKeeper.getData(key, false, stat);
+		expectLastCall().andThrow(ex);
+		replay(mockKeeper);
+		
+		ZkClock clock = new ZkClock(getProviderForZooKeeper(mockKeeper), new NullMetrics());
+		assertNull(myKeeper.exists(key, false));
+		try {
+			clock.getSequence(key);
+			fail();
+		} catch (SequencingException e) {
+			assertSame(ex, e.getCause());
+			throw e;
+		} finally {
+			verify(mockKeeper);
+		}
+	}
+	
 	private ZooKeeperProvider getProviderForZooKeeper(final ZooKeeper keeper){
 		return new ZooKeeperProvider(){
 			@Override
@@ -443,8 +511,14 @@ public class ZkClockTest {
 		ByteBuffer buf = ByteBuffer.wrap(data);
 		return buf.getLong();
 	}
+
+	private void assertCurrentStateAs(long sequence) throws Exception {
+		assertEquals(getNodeDataAsLong(key), sequence);
+		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
+		assertEquals(sequence, clock.getSequence(key));
+	}
 	
-	private class Driver implements Runnable{
+	private class Driver implements Runnable {
 		ZkClock clock;
 		int iterations;
 		String key;

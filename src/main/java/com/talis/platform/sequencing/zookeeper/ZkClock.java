@@ -30,10 +30,13 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.talis.platform.sequencing.Clock;
+import com.talis.platform.sequencing.NoSuchSequenceException;
 import com.talis.platform.sequencing.SequencingException;
 import com.talis.platform.sequencing.zookeeper.metrics.ZooKeeperMetrics;
 
 public class ZkClock implements Clock {
+
+	static final String NOT_FOUND_FORMAT = "Sequence with key %s not found";
 
 	static final Logger LOG = LoggerFactory.getLogger(ZkClock.class);
 
@@ -160,6 +163,30 @@ public class ZkClock implements Clock {
 			} catch (InterruptedException e) {
 				LOG.debug("Failed to sleep: " + e, e);
 			}
+		}
+	}
+
+	@Override
+	public long getSequence(String key) throws SequencingException {
+		LOG.debug(String.format("Get current sequence for key %s", key));
+		Stat stat = new Stat();
+		byte[] data;
+		try {
+			data = myZooKeeper.getData(key, false, stat);
+			ByteBuffer buf = ByteBuffer.wrap(data);
+			return buf.getLong();
+		} catch (KeeperException.NoNodeException e) {
+			String msg = String.format(NOT_FOUND_FORMAT, key);
+			LOG.debug(msg);
+			throw new NoSuchSequenceException(msg, e);
+		} catch (KeeperException e) {
+			String msg = String.format("KeeperException while getting sequence for key: %s", key);
+			LOG.debug(msg);
+			throw new SequencingException(msg, e);
+		} catch (InterruptedException e) {
+			String msg = String.format("InterruptedException while getting sequence for key: %s", key);
+			LOG.debug(msg);
+			throw new SequencingException(msg, e);
 		}
 	}
 }

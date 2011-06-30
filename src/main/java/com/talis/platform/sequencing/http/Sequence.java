@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import com.talis.platform.SystemTimestampProvider;
 import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.Clock;
+import com.talis.platform.sequencing.NoSuchSequenceException;
 import com.talis.platform.sequencing.metrics.NullSequencingMetrics;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
 
@@ -73,7 +74,7 @@ public class Sequence extends Resource {
 
 	@Override
     public boolean allowGet() {
-        return false;
+        return true;
     }
 	
 	@Override
@@ -82,13 +83,23 @@ public class Sequence extends Resource {
     }
 
     @Override
+	public void handleGet() {
+    	Response response = getResponse();
+    	response.getServerInfo()
+				.setAgent(SequenceServer.SERVER_IDENTIFIER);
+    	Representation rep = representGet(VARIANT);
+        response.setEntity(rep);
+	}
+
+	@Override
     public void handlePost() {
     	Response response = getResponse();
     	response.getServerInfo()
 				.setAgent(SequenceServer.SERVER_IDENTIFIER);
-    	Representation rep = represent(VARIANT);
+    	Representation rep = represent(VARIANT);    	
         response.setEntity(rep);
     }
+	
 	
 	@Override
 	public Representation represent(Variant variant) {
@@ -114,6 +125,43 @@ public class Sequence extends Resource {
 			myMetrics.incrementErrorResponses();
 			LOG.error(
 				String.format("Clock errored when incrementing sequence for key %s", 
+								myKey), e);
+			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, 
+									"Internal Error");
+			return new StringRepresentation(e.getMessage(), 
+									MediaType.TEXT_PLAIN);
+		}
+	}
+	
+	private Representation representGet(Variant variant) {
+		try {
+			if (LOG.isDebugEnabled()){
+				LOG.debug(String.format("Getting sequence for key %s",  
+										myKey));
+			}
+
+			// TODO: should we have read metrics?
+			Long sequence = myClock.getSequence(myKey);
+			
+			if (LOG.isDebugEnabled()){
+				LOG.debug(String.format("Current sequence for key %s is %s",  
+										myKey, sequence));
+			}
+			
+			return new StringRepresentation(sequence.toString(), 
+											MediaType.TEXT_PLAIN);
+		} catch (NoSuchSequenceException e) {
+			// Don't add this to error metrics, as it's not really an error.
+			LOG.info(
+				String.format("Sequence for key %s not found", 
+								myKey), e);
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+			return new StringRepresentation(e.getMessage(), 
+					MediaType.TEXT_PLAIN);
+		} catch (Exception e) {
+			myMetrics.incrementErrorResponses();
+			LOG.error(
+				String.format("Clock errored when getting sequence for key %s", 
 								myKey), e);
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, 
 									"Internal Error");
