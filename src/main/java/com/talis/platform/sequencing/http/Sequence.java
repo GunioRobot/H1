@@ -96,13 +96,11 @@ public class Sequence extends Resource {
     	Response response = getResponse();
     	response.getServerInfo()
 				.setAgent(SequenceServer.SERVER_IDENTIFIER);
-    	Representation rep = represent(VARIANT);    	
+    	Representation rep = representPost(VARIANT);    	
         response.setEntity(rep);
     }
 	
-	
-	@Override
-	public Representation represent(Variant variant) {
+	public Representation representPost(Variant variant) {
 		try {
 			if (LOG.isDebugEnabled()){
 				LOG.debug(String.format("Getting next sequence for key %s",  

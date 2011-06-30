@@ -266,7 +266,7 @@ public class SequenceTest {
 		verify(request);
 		verify(response);
 	}
-	
+    
 	public static StringRepresentation eqStringRepresentation(
 									StringRepresentation expected) {
     	reportMatcher(new StringRepresentationEquals(expected));

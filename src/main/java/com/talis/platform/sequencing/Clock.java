@@ -20,6 +20,6 @@ public interface Clock {
 
 	public long getNextSequence(String key) throws SequencingException;
 
-	public long getSequence(String myKey) throws SequencingException;
+	public long getSequence(String key) throws SequencingException;
 
 }
