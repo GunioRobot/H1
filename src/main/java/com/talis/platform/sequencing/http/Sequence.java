@@ -138,8 +138,10 @@ public class Sequence extends Resource {
 										myKey));
 			}
 
-			// TODO: should we have read metrics?
+			long start = myTimestampProvider.getCurrentTimeInMillis();
 			Long sequence = myClock.getSequence(myKey);
+			long end = myTimestampProvider.getCurrentTimeInMillis();
+			myMetrics.recordSequenceReadLatency(end - start);
 			
 			if (LOG.isDebugEnabled()){
 				LOG.debug(String.format("Current sequence for key %s is %s",  
@@ -157,7 +159,7 @@ public class Sequence extends Resource {
 			return new StringRepresentation(e.getMessage(), 
 					MediaType.TEXT_PLAIN);
 		} catch (Exception e) {
-			myMetrics.incrementErrorResponses();
+			myMetrics.incrementReadErrorResponses();
 			LOG.error(
 				String.format("Clock errored when getting sequence for key %s", 
 								myKey), e);
