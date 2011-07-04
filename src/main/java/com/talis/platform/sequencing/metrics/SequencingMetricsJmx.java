@@ -29,18 +29,9 @@ import com.talis.jmx.JmxSupport;
 
 public class SequencingMetricsJmx extends JmxSupport 
 implements SequencingMetrics, SequencingMetricsJmxMBean {
-
-	private final AtomicInteger writeSequenceOperations = new AtomicInteger(0);
-	private final AtomicLong writeSequenceLatencyTotal = new AtomicLong(0);
-	private final AtomicLong writeSequenceLatencyMin = new AtomicLong(0);
-	private final AtomicLong writeSequenceLatencyMax = new AtomicLong(0);
-	private final AtomicInteger writeSequenceLatencySample = new AtomicInteger(0);
 	
-	private final AtomicInteger readSequenceOperations = new AtomicInteger(0);
-	private final AtomicLong readSequenceLatencyTotal = new AtomicLong(0);
-	private final AtomicLong readSequenceLatencyMin = new AtomicLong(0);
-	private final AtomicLong readSequenceLatencyMax = new AtomicLong(0);
-	private final AtomicInteger readSequenceLatencySample = new AtomicInteger(0);
+	private final LatencyMetric writeLatencyMetrics = new LatencyMetric();
+	private final LatencyMetric readLatencyMetrics = new LatencyMetric();
 
 	private final AtomicInteger errorResponses = new AtomicInteger(0);
 	private final AtomicInteger readErrorResponses = new AtomicInteger(0);
@@ -56,86 +47,61 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 		return "com.talis:name=SequencingMetrics";
 	}
 	
+	// Write latency metrics
+	
 	@Override
 	public int getWriteSequenceOperations() {
-		int valueToReturn = writeSequenceOperations.get();
-		writeSequenceOperations.set(0);
-		return valueToReturn;
-	}
-
-	@Override
-	public int getReadSequenceOperations() {
-		int valueToReturn = readSequenceOperations.get();
-		readSequenceOperations.set(0);
-		return valueToReturn;
-	}
-
-	@Override
-	public long getAverageWriteSequenceLatency() {
-		long averageWriteLatency = 0;
-		if (writeSequenceLatencySample.get() > 0){
-			averageWriteLatency = 
-				writeSequenceLatencyTotal.get() / writeSequenceLatencySample.get();
-			writeSequenceLatencySample.set(0);
-			writeSequenceLatencyTotal.set(0);
-		}
-		return averageWriteLatency;
-	}
-	
-	@Override
-	public long getAverageReadSequenceLatency() {
-		long averageReadLatency = 0;
-		if (readSequenceLatencySample.get() > 0){
-			averageReadLatency = 
-				readSequenceLatencyTotal.get() / readSequenceLatencySample.get();
-			readSequenceLatencySample.set(0);
-			readSequenceLatencyTotal.set(0);
-		}
-		return averageReadLatency;
-	}
-
-	@Override
-	public void recordSequenceWriteLatency(long latency) {
-		writeSequenceOperations.incrementAndGet();
-		writeSequenceLatencySample.incrementAndGet();
-		writeSequenceLatencyTotal.addAndGet(latency);
-		if (latency < writeSequenceLatencyMin.get()  
-			|| writeSequenceLatencyMin.get() == 0 ){
-			writeSequenceLatencyMin.set(latency);
-		}
-		if (latency > writeSequenceLatencyMax.get()){
-			writeSequenceLatencyMax.set(latency);
-		}
-	}
-
-	@Override
-	public void recordSequenceReadLatency(long latency) {
-		readSequenceOperations.incrementAndGet();
-		readSequenceLatencySample.incrementAndGet();
-		readSequenceLatencyTotal.addAndGet(latency);
-		if (latency < readSequenceLatencyMin.get()  
-			|| readSequenceLatencyMin.get() == 0 ){
-			readSequenceLatencyMin.set(latency);
-		}
-		if (latency > readSequenceLatencyMax.get()){
-			readSequenceLatencyMax.set(latency);
-		}
-		
-	}
-	
-	@Override
-	public long getMaxWriteSequenceLatency() {
-		long valueToReturn = writeSequenceLatencyMax.get();
-		writeSequenceLatencyMax.set(0);
-		return valueToReturn;
+		return writeLatencyMetrics.getCount();
 	}
 
 	@Override
 	public long getMinWriteSequenceLatency() {
-		long valueToReturn = writeSequenceLatencyMin.get();
-		writeSequenceLatencyMin.set(0);
-		return valueToReturn;
+		return writeLatencyMetrics.getMinLatency();
 	}
+	
+	@Override
+	public long getMaxWriteSequenceLatency() {
+		return writeLatencyMetrics.getMaxLatency();
+	}
+
+	@Override
+	public long getAverageWriteSequenceLatency() {
+		return writeLatencyMetrics.getAverageLatency();
+	}
+
+	@Override
+	public void recordSequenceWriteLatency(long latency) {
+		writeLatencyMetrics.recordLatency(latency);
+	}
+	
+	// Read latency metrix
+	
+	@Override
+	public int getReadSequenceOperations() {
+		return readLatencyMetrics.getCount();
+	}
+
+	@Override
+	public long getMinReadSequenceLatency() {
+		return readLatencyMetrics.getMinLatency();
+	}
+
+	@Override
+	public long getMaxReadSequenceLatency() {
+		return readLatencyMetrics.getMaxLatency();
+	}
+	
+	@Override
+	public long getAverageReadSequenceLatency() {
+		return readLatencyMetrics.getAverageLatency();
+	}
+
+	@Override
+	public void recordSequenceReadLatency(long latency) {
+		readLatencyMetrics.recordLatency(latency);
+	}
+	
+	// Error metrics
 
 	@Override
 	public void incrementErrorResponses() {
@@ -145,20 +111,6 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	@Override
 	public void incrementReadErrorResponses() {
 		readErrorResponses.incrementAndGet();
-	}
-
-	@Override
-	public long getMinReadSequenceLatency() {
-		long valueToReturn = readSequenceLatencyMin.get();
-		readSequenceLatencyMin.set(0);
-		return valueToReturn;
-	}
-
-	@Override
-	public long getMaxReadSequenceLatency() {
-		long valueToReturn = readSequenceLatencyMax.get();
-		readSequenceLatencyMax.set(0);
-		return valueToReturn;
 	}
 	
 	@Override
