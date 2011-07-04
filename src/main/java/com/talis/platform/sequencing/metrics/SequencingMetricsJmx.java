@@ -36,6 +36,15 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	private final AtomicLong writeSequenceLatencyMax = new AtomicLong(0);
 	private final AtomicInteger writeSequenceLatencySample = new AtomicInteger(0);
 	
+	private final AtomicInteger readSequenceOperations = new AtomicInteger(0);
+	private final AtomicLong readSequenceLatencyTotal = new AtomicLong(0);
+	private final AtomicLong readSequenceLatencyMin = new AtomicLong(0);
+	private final AtomicLong readSequenceLatencyMax = new AtomicLong(0);
+	private final AtomicInteger readSequenceLatencySample = new AtomicInteger(0);
+
+	private final AtomicInteger errorResponses = new AtomicInteger(0);
+	private final AtomicInteger readErrorResponses = new AtomicInteger(0);
+	
 	public SequencingMetricsJmx() throws MalformedObjectNameException,
 			InstanceAlreadyExistsException, MBeanRegistrationException,
 			NotCompliantMBeanException, NullPointerException, IOException {
@@ -55,6 +64,13 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	}
 
 	@Override
+	public int getReadSequenceOperations() {
+		int valueToReturn = readSequenceOperations.get();
+		readSequenceOperations.set(0);
+		return valueToReturn;
+	}
+
+	@Override
 	public long getAverageWriteSequenceLatency() {
 		long averageWriteLatency = 0;
 		if (writeSequenceLatencySample.get() > 0){
@@ -64,6 +80,18 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 			writeSequenceLatencyTotal.set(0);
 		}
 		return averageWriteLatency;
+	}
+	
+	@Override
+	public long getAverageReadSequenceLatency() {
+		long averageReadLatency = 0;
+		if (readSequenceLatencySample.get() > 0){
+			averageReadLatency = 
+				readSequenceLatencyTotal.get() / readSequenceLatencySample.get();
+			readSequenceLatencySample.set(0);
+			readSequenceLatencyTotal.set(0);
+		}
+		return averageReadLatency;
 	}
 
 	@Override
@@ -78,6 +106,21 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 		if (latency > writeSequenceLatencyMax.get()){
 			writeSequenceLatencyMax.set(latency);
 		}
+	}
+
+	@Override
+	public void recordSequenceReadLatency(long latency) {
+		readSequenceOperations.incrementAndGet();
+		readSequenceLatencySample.incrementAndGet();
+		readSequenceLatencyTotal.addAndGet(latency);
+		if (latency < readSequenceLatencyMin.get()  
+			|| readSequenceLatencyMin.get() == 0 ){
+			readSequenceLatencyMin.set(latency);
+		}
+		if (latency > readSequenceLatencyMax.get()){
+			readSequenceLatencyMax.set(latency);
+		}
+		
 	}
 	
 	@Override
@@ -94,10 +137,28 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 		return valueToReturn;
 	}
 
-	private final AtomicInteger errorResponses = new AtomicInteger(0);
 	@Override
 	public void incrementErrorResponses() {
 		errorResponses.incrementAndGet();
+	}
+
+	@Override
+	public void incrementReadErrorResponses() {
+		readErrorResponses.incrementAndGet();
+	}
+
+	@Override
+	public long getMinReadSequenceLatency() {
+		long valueToReturn = readSequenceLatencyMin.get();
+		readSequenceLatencyMin.set(0);
+		return valueToReturn;
+	}
+
+	@Override
+	public long getMaxReadSequenceLatency() {
+		long valueToReturn = readSequenceLatencyMax.get();
+		readSequenceLatencyMax.set(0);
+		return valueToReturn;
 	}
 	
 	@Override
@@ -107,6 +168,11 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 		return valueToReturn;
 	}
 
-	
+	@Override
+	public int getReadErrorResponseCount() {
+		int valueToReturn = readErrorResponses.get();
+		readErrorResponses.set(0);
+		return valueToReturn;
+	}
 
 }

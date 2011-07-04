@@ -18,9 +18,16 @@ package com.talis.platform.sequencing.metrics;
 
 public interface SequencingMetricsJmxMBean {
 
+	// Write metrics
 	public int getWriteSequenceOperations();
 	public long getAverageWriteSequenceLatency();
 	public long getMinWriteSequenceLatency();
 	public long getMaxWriteSequenceLatency();
 	public int getErrorResponseCount();
+	// Read metrics
+	public int getReadSequenceOperations();
+	public long getAverageReadSequenceLatency();
+	public long getMinReadSequenceLatency();
+	public long getMaxReadSequenceLatency();
+	public int getReadErrorResponseCount();
 }

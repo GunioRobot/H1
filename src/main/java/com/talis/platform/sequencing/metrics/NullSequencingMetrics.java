@@ -24,4 +24,10 @@ public class NullSequencingMetrics implements SequencingMetrics {
 	@Override
 	public void incrementErrorResponses() {}
 
+	@Override
+	public void recordSequenceReadLatency(long latency) {}
+
+	@Override
+	public void incrementReadErrorResponses() {}
+
 }

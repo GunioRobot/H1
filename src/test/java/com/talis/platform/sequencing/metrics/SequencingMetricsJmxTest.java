@@ -133,9 +133,112 @@ public class SequencingMetricsJmxTest extends AbstractJmxSupportTest{
 	}
 	
 	@Test
-	public void errorResponseCountIsZeroIfNoOperationsRecorded()
+	public void recordingSequenceReadLatenciesGivesAverage() throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		reporter.recordSequenceReadLatency(5);
+		reporter.recordSequenceReadLatency(10);
+		reporter.recordSequenceReadLatency(10);
+		reporter.recordSequenceReadLatency(20);
+		assertEquals(10, reporter.getAverageReadSequenceLatency());
+	}
+	
+	@Test
+	public void retrievingAverageSequenceReadLatencyResetsCounts()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		assertEquals(5, reporter.getAverageReadSequenceLatency());
+		assertEquals(0, reporter.getAverageReadSequenceLatency());
+	}
+	
+	@Test
+	public void averageSequenceReadLatencyIsZeroIfNoOperationsRecorded()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		assertEquals(0, reporter.getAverageReadSequenceLatency());
+	}
+	
+	@Test
+	public void recordingSequenceReadLatencyIncrementsOperationCount()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		reporter.recordSequenceReadLatency(4);
+		reporter.recordSequenceReadLatency(6);
+		assertEquals(3, reporter.getReadSequenceOperations());
+	}
+	
+	@Test
+	public void recordingSequenceReadLatencyWithNewFloorValue()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(6);
+		reporter.recordSequenceReadLatency(5);
+		assertEquals(5, reporter.getMinReadSequenceLatency());
+	}
+	
+	@Test
+	public void recordingSequenceReadLatencyWithNewCeilingValue()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		reporter.recordSequenceReadLatency(6);
+		assertEquals(6, reporter.getMaxReadSequenceLatency());
+	}	
+	
+		
+	@Test
+	public void retrievingSequenceReadMinLatencyResetsCounter()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		assertEquals(5, reporter.getMinReadSequenceLatency());
+		assertEquals(0, reporter.getMinReadSequenceLatency());
+	}
+
+	@Test
+	public void retrievingSequenceReadMaxLatencyResetsCounter()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		assertEquals(5, reporter.getMaxReadSequenceLatency());
+		assertEquals(0, reporter.getMaxReadSequenceLatency());
+	}
+		
+	@Test
+	public void retrievingSequenceReadCountResetsCounter()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.recordSequenceReadLatency(5);
+		assertEquals(1, reporter.getReadSequenceOperations());
+		assertEquals(0, reporter.getReadSequenceOperations());
+	}
+	
+	@Test
+	public void incrementReadErrorResponses() throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.incrementReadErrorResponses();
+		reporter.incrementReadErrorResponses();
+		reporter.incrementReadErrorResponses();
+		reporter.incrementReadErrorResponses();
+		assertEquals(4, reporter.getReadErrorResponseCount());
+	}
+	
+	@Test
+	public void retrievingReadErrorResponsesResetsCounts()
+	throws Exception{
+		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
+		reporter.incrementReadErrorResponses();
+		assertEquals(1, reporter.getReadErrorResponseCount());
+		assertEquals(0, reporter.getReadErrorResponseCount());
+	}
+	
+	@Test
+	public void errorResponseCountersAreZeroIfNoOperationsRecorded()
 	throws Exception{
 		SequencingMetricsJmx reporter = (SequencingMetricsJmx)getReporter();
 		assertEquals(0, reporter.getErrorResponseCount());
+		assertEquals(0, reporter.getReadErrorResponseCount());
 	}
 }
