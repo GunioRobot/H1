@@ -152,8 +152,9 @@
 		               units="ms" 
 		               slope="both" />
 		  </attribute>
-		</mbean>	
-   		<mbean name="com.talis:name=ZkSequencingMetrics1" pname="writes">
+		</mbean>
+		<mbean name="com.talis:name=SequencingMetrics" pname="writes">
+		<!-- would be good to rename this, but does this break metric history ? -->
             <attribute name="WriteSequenceOperations" 
                         pname="WriteSequenceOperations" 
                         type="int32"
@@ -176,6 +177,31 @@
                         slope="both" />
             <attribute name="ErrorResponseCount" 
                         pname="ErrorResponseCount" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="ReadSequenceOperations" 
+                        pname="ReadSequenceOperations" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+		<attribute name="AverageReadSequenceLatency" 
+                        pname="AverageReadSequenceLatency" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+	<attribute name="MinReadSequenceLatency" 
+                        pname="MinReadSequenceLatency" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="MaxReadSequenceLatency" 
+                        pname="MaxReadSequenceLatency" 
+                        type="int32"
+                        units="" 
+                        slope="both" />
+            <attribute name="ReadErrorResponseCount" 
+                        pname="ReadErrorResponseCount" 
                         type="int32"
                         units="" 
                         slope="both" />
