@@ -20,9 +20,10 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import com.talis.jmx.AbstractJmxSupportTest;
 import com.talis.platform.sequencing.metrics.SequencingMetricsJmxTest;
 
-public class ZooKeeperMetricsJmxTest extends SequencingMetricsJmxTest {
+public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 
 	@Override
 	public ZooKeeperMetricsJmx getReporter() throws Exception{

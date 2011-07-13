@@ -18,7 +18,7 @@ package com.talis.platform.sequencing.zookeeper.metrics;
 
 import com.talis.platform.sequencing.metrics.SequencingMetricsJmxMBean;
 
-public interface ZooKeeperMetricsJmxMBean extends SequencingMetricsJmxMBean {
+public interface ZooKeeperMetricsJmxMBean {
 
 	public int getKeyCollisions();
 	public int getKeyCreations();

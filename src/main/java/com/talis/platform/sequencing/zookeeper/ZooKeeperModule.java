@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.talis.platform.sequencing.Clock;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
+import com.talis.platform.sequencing.metrics.SequencingMetricsJmx;
 import com.talis.platform.sequencing.zookeeper.metrics.ZooKeeperMetrics;
 import com.talis.platform.sequencing.zookeeper.metrics.ZooKeeperMetricsJmx;
 
@@ -30,9 +31,8 @@ public class ZooKeeperModule extends AbstractModule {
 	protected void configure() {
 		bind(ZooKeeperProvider.class).in(Scopes.SINGLETON);
 		bind(Clock.class).to(ZkClock.class);
-		bind(ZooKeeperMetricsJmx.class).in(Scopes.SINGLETON);
-		bind(ZooKeeperMetrics.class).to(ZooKeeperMetricsJmx.class);
-		bind(SequencingMetrics.class).to(ZooKeeperMetricsJmx.class);
+		bind(ZooKeeperMetrics.class).to(ZooKeeperMetricsJmx.class).in(Scopes.SINGLETON);
+		bind(SequencingMetrics.class).to(SequencingMetricsJmx.class).in(Scopes.SINGLETON);
 	}
 
 }
