@@ -153,8 +153,7 @@
 		               slope="both" />
 		  </attribute>
 		</mbean>
-		<mbean name="com.talis:name=SequencingMetrics" pname="writes">
-		<!-- would be good to rename this, but does this break metric history ? -->
+		<mbean name="com.talis:name=SequencingMetrics1" pname="sequencing">
             <attribute name="WriteSequenceOperations" 
                         pname="WriteSequenceOperations" 
                         type="int32"
