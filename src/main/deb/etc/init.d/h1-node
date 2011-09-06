@@ -5,8 +5,13 @@
 start() {
   cd /opt/h1
   if [ -s /var/run/h1-node.pid ]; then
-    echo "H1 Server process already running, use stop or restart."
-    exit
+    read PID < /var/run/h1-node.pid
+    ps -ef | grep $PID | grep -v grep >/dev/null
+    RETVAL=$?
+    if [ $RETVAL == 0 ]; then
+      echo "H1 Server process already running, use stop or restart."
+      exit 1
+    fi
   fi
   exec &> /dev/null
   exec ./h1-node.sh
