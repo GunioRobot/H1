@@ -9,7 +9,7 @@
     </appender>
     
     <appender name="fileout" class="org.apache.log4j.FileAppender"> 
-        <param name="File" value="/var/log/h1/h1.fifo"/> 
+        <param name="File" value="/tmp/h1-test.log"/> 
         <layout class="org.apache.log4j.PatternLayout"> 
             <param name="ConversionPattern" value="%d{ISO8601} -%5p %-25c{1} :%t:%m%n"/> 
         </layout> 
@@ -21,13 +21,15 @@
         </layout>
     </appender>
     
-    <logger name="com.talis">
+    <logger name="com.talis.platform.sequencing.zookeeper.ZooKeeperProvider">
         <level value="DEBUG"/> 
     </logger> 
 
     <root> 
-        <level value="warn"/>
-        <appender-ref ref="NULL" /> 
+        <level value="WARN"/>
+        <!-- appender-ref ref="fileout" /> 
+        <appender-ref ref="stdout" /-->
+        <appender-ref ref="NULL" />
     </root> 
 
 </log4j:configuration>

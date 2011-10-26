@@ -17,7 +17,6 @@
 package com.talis.platform.sequencing.zookeeper;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -125,29 +124,23 @@ public class ZooKeeperProviderTest {
 		ensureServerStopped(DEFAULT_HOST_PORT);
 		final ZooKeeperProvider provider = new ZooKeeperProvider();
 		final long waitPeriod = 300; 
-		class Tuple{
-			volatile long time1;
-			volatile long time2;
-			volatile ZooKeeper client;
-		}
-	
-		Callable<Tuple> requester = new Callable<Tuple>(){
+		Callable<Long> requester = new Callable<Long>() {
 			@Override
-			public Tuple call() {
-				Tuple t = new Tuple();
+			public Long call() throws ZooKeeperInitialisationException {
 				try {
-					t.time1 = System.currentTimeMillis();
-					t.client = provider.get();
-					t.time2 = System.currentTimeMillis();
+					long time1 = System.currentTimeMillis();
+					provider.get();
+					long time2 = System.currentTimeMillis();
+					return (time2 - time1);
 				} catch (ZooKeeperInitialisationException e) {
 					e.printStackTrace();
 					fail("Caught unexpected exception");
+					throw e;
 				}
-				return t;
 			}
 		};
 		ExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-  	    Future<Tuple> future = executor.submit(requester);
+  	    Future<Long> future = executor.submit(requester);
   	    
 		WatchedEvent connectedEvent = 
 			new WatchedEvent(Watcher.Event.EventType.None, 
@@ -155,12 +148,8 @@ public class ZooKeeperProviderTest {
 							 null);
 		Thread.sleep(waitPeriod + 10);
 		provider.process(connectedEvent);
-		
-		Tuple t = future.get();
-		assertNotNull(t.client);
-		t.client.close();
-	
-		assertTrue( (t.time2 - t.time1) >= waitPeriod);
+		Long fetchTime = future.get();
+		assertTrue( fetchTime >= waitPeriod);
 	}
 	
 	@Test
