@@ -162,6 +162,7 @@ public class ZooKeeperProviderTest {
 		try{
 			assertTrue( (t.time2 - t.time1) >= waitPeriod);
 		}finally{
+			System.out.println(provider.getEnsembleList());
 			System.out.println("t1 = " + t.time1 + " t2 = " + t.time2);
 		}
 	}
