@@ -159,8 +159,11 @@ public class ZooKeeperProviderTest {
 		Tuple t = future.get();
 		assertNotNull(t.client);
 		t.client.close();
-	
-		assertTrue( (t.time2 - t.time1) >= waitPeriod);
+		try{
+			assertTrue( (t.time2 - t.time1) >= waitPeriod);
+		}finally{
+			System.out.println("t1 = " + t.time1 + " t2 = " + t.time2);
+		}
 	}
 	
 	@Test
