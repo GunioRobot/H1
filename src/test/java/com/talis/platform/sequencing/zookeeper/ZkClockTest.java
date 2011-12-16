@@ -19,9 +19,9 @@ package com.talis.platform.sequencing.zookeeper;
 import static org.easymock.EasyMock.anyInt;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.aryEq;
+import static org.easymock.EasyMock.createStrictMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.createStrictMock;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
@@ -38,9 +38,9 @@ import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.Before;
@@ -207,7 +207,6 @@ public class ZkClockTest {
 	@Test 
 	public void createNextSequenceForExistingKey() throws Exception{
 		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
-		ByteBuffer buf = ByteBuffer.wrap(ZkClock.DEFAULT_DATA);
 		clock.getNextSequence(key);
 		assertNotNull(myKeeper.exists(key, false));
 		long sequence = clock.getNextSequence(key);

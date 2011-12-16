@@ -16,7 +16,6 @@
 
 package com.talis.platform.sequencing.zookeeper.metrics;
 
-import com.talis.platform.sequencing.metrics.SequencingMetricsJmxMBean;
 
 public interface ZooKeeperMetricsJmxMBean {
 

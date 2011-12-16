@@ -16,349 +16,182 @@
 
 package com.talis.platform.sequencing.http;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.reportMatcher;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.createStrictMock;
+import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
-import org.easymock.IArgumentMatcher;
-import org.easymock.internal.matchers.Any;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.restlet.Context;
-import org.restlet.data.Request;
-import org.restlet.data.Response;
-import org.restlet.data.ServerInfo;
-import org.restlet.data.Status;
-import org.restlet.resource.StringRepresentation;
 
+import com.talis.jersey.exceptions.NotFoundException;
+import com.talis.jersey.exceptions.ServerErrorException;
+import com.talis.platform.SystemTimestampProvider;
 import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.Clock;
 import com.talis.platform.sequencing.NoSuchSequenceException;
 import com.talis.platform.sequencing.SequencingException;
+import com.talis.platform.sequencing.metrics.NullSequencingMetrics;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
 
 public class SequenceTest {
 
-	private Context context;
-	private Request request;
-	private Response response;
-	private ServerInfo serverInfo;
-	private final String keyBase = UUID.randomUUID().toString();
-	private String key;
+	String key;
+	String fullKey;
+	TimestampProvider timestampProvider;
+	Clock clock;
+	SequencingMetrics metrics;
+	
 	
 	@Before
 	public void setup(){
-		key = "/" + keyBase;
-		Map<String,Object> attributes = new HashMap<String, Object>()
-										{{ put("key", keyBase); }}; 
-
-		context = createNiceMock(Context.class);
-		request = createStrictMock(Request.class);
-		expect(request.getAttributes()).andReturn(attributes);
-		replay(request);
-		
-		serverInfo = createStrictMock(ServerInfo.class);
-		serverInfo.setAgent(SequenceServer.SERVER_IDENTIFIER);
-		replay(serverInfo);
+		metrics = new NullSequencingMetrics();
+		timestampProvider = new SystemTimestampProvider();
+		key = UUID.randomUUID().toString();
+		fullKey = "/" + key;
 	}
 	
-	@Test
-    public void putIsNotAnAllowedMethod(){
-	   Sequence resource = new Sequence(context, request, 
-			   								createNiceMock(Response.class));
-       assertFalse(resource.allowPut());
-    }
-        
-    @Test
-    public void deleteIsNotAnAllowedMethod(){
-    	Sequence resource = new Sequence(context, request, 
-			   								createNiceMock(Response.class));
-        assertFalse(resource.allowDelete());
-    }
-    
-    @Test
-    public void getIsNotAnAllowedMethod(){
-    	Sequence resource = new Sequence(context, request, 
-			   								createNiceMock(Response.class));
-        assertTrue(resource.allowGet());
-    }
-
-    @Test
-    public void postIsAnAllowedMethod(){
-    	Sequence resource = new Sequence(context, request, 
-			   								createNiceMock(Response.class));
-        assertTrue(resource.allowPost());
-    }
+	@After
+	public void teardown(){
+		verify(clock);
+	}
 	
 	@Test
 	public void postingUsesClockToIncrementSeqAndReturnsNextValue() 
 	throws SequencingException{
-		Clock clock = createStrictMock(Clock.class);
-		expect(clock.getNextSequence(key)).andReturn(999l);
+		clock = createStrictMock(Clock.class);
+		expect(clock.getNextSequence(fullKey)).andReturn(999l);
 		replay(clock);
-		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation("999") ) ) ;
-        replay(response);
 
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.handlePost();
-		
-		verify(request);
-		verify(response);
+		Sequence resource = new Sequence(clock, timestampProvider, metrics );
+		assertEquals("999", resource.incrementSequence(key));
 	}
 	
 	@Test
 	public void recordSequenceIncrementLatencyViaMetricsObject() 
 	throws Exception{
-		Clock clock = createNiceMock(Clock.class);
-		expect(clock.getNextSequence(key)).andReturn(999l);
+		clock = createNiceMock(Clock.class);
+		expect(clock.getNextSequence(fullKey)).andReturn(999l);
 		replay(clock);
 		
-		TimestampProvider mockProvider = 
-			createStrictMock(TimestampProvider.class);
+		TimestampProvider mockProvider = createStrictMock(TimestampProvider.class);
 		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
 		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
 		replay(mockProvider);
 		
-		SequencingMetrics mockMetrics = 
-			createStrictMock(SequencingMetrics.class);
+		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
 		mockMetrics.recordSequenceWriteLatency(50l);
 		replay(mockMetrics);
 		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation("999") ) ) ;
-        replay(response);
-
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.setTimestampProvider(mockProvider);
-		resource.setMetrics(mockMetrics);
-		
-		resource.handlePost();
-		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		resource.incrementSequence(key);
 		verify(mockProvider);
 		verify(mockMetrics);
 	}
 	
-	@Test
-	public void return500IfClockThrowsException() throws Exception{ 
-		Clock clock = createStrictMock(Clock.class);
-		expect(clock.getNextSequence(key))
-				.andThrow(new RuntimeException("BANG!"));
+	@Test (expected=ServerErrorException.class)
+	public void return500IfClockThrowsException() throws Exception { 
+		clock = createStrictMock(Clock.class);
+		expect(clock.getNextSequence(fullKey)).andThrow(new RuntimeException("BANG!"));
 		replay(clock);
 		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-		response.setStatus(Status.SERVER_ERROR_INTERNAL, "Internal Error");
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation("BANG!") ) ) ;
-        replay(response);
-
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.handlePost();
-		
-		verify(request);
-		verify(response);		
+		Sequence resource = new Sequence(clock, timestampProvider, metrics);
+		resource.incrementSequence(key);
 	}
 	
-	@Test
-	public void return500IfClockThrowsExceptionDuringRead() throws Exception{ 
-		Clock clock = createStrictMock(Clock.class);
-		expect(clock.getSequence(key))
-				.andThrow(new RuntimeException("BANG!"));
+	@Test (expected=ServerErrorException.class)
+	public void return500IfClockThrowsExceptionDuringRead() throws Exception { 
+		clock = createStrictMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andThrow(new RuntimeException("BANG!"));
 		replay(clock);
 		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-		response.setStatus(Status.SERVER_ERROR_INTERNAL, "Internal Error");
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation("BANG!") ) ) ;
-        replay(response);
-
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.handleGet();
-		
-		verify(request);
-		verify(response);		
+		Sequence resource = new Sequence(clock, timestampProvider, metrics);
+		resource.getCurrentSequence(key);
 	}
 	
-	@Test
-	public void incrementClockErrorsViaMetricsObject() 
-	throws Exception{
-		Clock clock = createNiceMock(Clock.class);
-		expect(clock.getNextSequence(key)).andThrow(new RuntimeException("KABOOM!"));
+	@Test (expected=ServerErrorException.class)
+	public void incrementClockErrorsViaMetricsObject() throws Exception {
+		clock = createNiceMock(Clock.class);
+		expect(clock.getNextSequence(fullKey)).andThrow(new RuntimeException("KABOOM!"));
 		replay(clock);
 		
-		SequencingMetrics mockMetrics = 
-			createStrictMock(SequencingMetrics.class);
+		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
 		mockMetrics.incrementErrorResponses();
 		replay(mockMetrics);
 		
-		response = createNiceMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-		replay(response);
-        
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.setMetrics(mockMetrics);
-		
-		resource.handlePost();
-		
-		verify(mockMetrics);
+		Sequence resource = new Sequence(clock, timestampProvider, mockMetrics);
+		try{
+			resource.incrementSequence(key);
+		}finally{
+			verify(mockMetrics);	
+		}
 	}
 	
-
-	
-	
     @Test
-	public void getUsesClockToGetValue() 
-	throws SequencingException{
-		Clock clock = createStrictMock(Clock.class);
-		expect(clock.getSequence(key)).andReturn(999l);
+	public void getUsesClockToGetValue() throws SequencingException{
+		clock = createStrictMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(999l);
 		replay(clock);
 		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation("999") ) ) ;
-        replay(response);
-
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.handleGet();
-		
-		verify(request);
-		verify(response);
+		Sequence resource = new Sequence(clock, timestampProvider, metrics);
+		assertEquals("999", resource.getCurrentSequence(key));
+		verify(clock);
 	}
     
-    @Test
-	public void getReturns404WhenNoSuchSequenceExceptionIsThrown() 
-	throws SequencingException{
-		Clock clock = createStrictMock(Clock.class);
+    @Test (expected=NotFoundException.class)
+	public void getReturns404WhenNoSuchSequenceExceptionIsThrown() throws Exception { 
+		clock = createStrictMock(Clock.class);
 		Exception ex = new NoSuchSequenceException("BOOM!", null);
-		expect(clock.getSequence(key)).andThrow(ex);
+		expect(clock.getSequence(fullKey)).andThrow(ex);
 		replay(clock);
 		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-		response.setStatus(Status.CLIENT_ERROR_NOT_FOUND);
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation(ex.getMessage()) ) ) ;
-        replay(response);
-
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.handleGet();
-		
-		verify(request);
-		verify(response);
+		Sequence resource = new Sequence(clock, timestampProvider, metrics);
+		resource.getCurrentSequence(key);
 	}
     
-    
-	@Test
-	public void incrementClockReadErrorsViaMetricsObject() 
-	throws Exception{
-		Clock clock = createNiceMock(Clock.class);
-		expect(clock.getSequence(key)).andThrow(new RuntimeException("KABOOM!"));
+	@Test (expected=ServerErrorException.class)
+	public void incrementClockReadErrorsViaMetricsObject() throws Exception{
+		clock = createNiceMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andThrow(new RuntimeException("KABOOM!"));
 		replay(clock);
 		
-		SequencingMetrics mockMetrics = 
-			createStrictMock(SequencingMetrics.class);
+		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
 		mockMetrics.incrementReadErrorResponses();
 		replay(mockMetrics);
-		
-		response = createNiceMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-		replay(response);
         
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.setMetrics(mockMetrics);
-		
-		resource.handleGet();
-		
-		verify(mockMetrics);
+		Sequence resource = new Sequence(clock, timestampProvider, mockMetrics);
+		try{
+			resource.getCurrentSequence(key);
+		}finally{
+			verify(mockMetrics);
+		}
 	}
 	
 	@Test
-	public void getSequenceIncrementLatencyViaMetricsObject() 
-	throws Exception{
-		Clock clock = createNiceMock(Clock.class);
-		expect(clock.getSequence(key)).andReturn(999l);
+	public void getSequenceIncrementLatencyViaMetricsObject() throws Exception{
+		clock = createNiceMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(999l);
 		replay(clock);
 		
-		TimestampProvider mockProvider = 
-			createStrictMock(TimestampProvider.class);
+		TimestampProvider mockProvider = createStrictMock(TimestampProvider.class);
 		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
 		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
 		replay(mockProvider);
 		
-		SequencingMetrics mockMetrics = 
-			createStrictMock(SequencingMetrics.class);
+		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
 		mockMetrics.recordSequenceReadLatency(50l);
 		replay(mockMetrics);
 		
-		response = createStrictMock(Response.class);
-		expect(response.getServerInfo()).andReturn(serverInfo);
-        response.setEntity( eqStringRepresentation( 
-        					new StringRepresentation("999") ) ) ;
-        replay(response);
-
-		Sequence resource = new Sequence(context, request, response);
-		resource.setClock(clock);
-		resource.setTimestampProvider(mockProvider);
-		resource.setMetrics(mockMetrics);
-		
-		resource.handleGet();
-		
-		verify(mockProvider);
-		verify(mockMetrics);
-	}
-	
-    
-	public static StringRepresentation eqStringRepresentation(
-									StringRepresentation expected) {
-    	reportMatcher(new StringRepresentationEquals(expected));
-		return expected;
-    }
-	
-	static class StringRepresentationEquals implements IArgumentMatcher{
-		private StringRepresentation expected;
-		StringRepresentationEquals(StringRepresentation expected){
-			this.expected = expected;
-		}
-		
-		@Override
-		public void appendTo(StringBuffer arg0) {
-			arg0.append("eqStringRepresentation(");
-			arg0.append(expected.getText());
-			arg0.append(")");
-		}
-
-		@Override
-		public boolean matches(Object arg0) {
-			if (! (arg0 instanceof StringRepresentation)){
-				return false;
-			}
-			return ((StringRepresentation)arg0).getText().equals(
-													expected.getText() );
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		try{
+			resource.getCurrentSequence(key);
+		}catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 }

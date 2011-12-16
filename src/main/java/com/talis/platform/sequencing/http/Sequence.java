@@ -16,157 +16,79 @@
 
 package com.talis.platform.sequencing.http;
 
-import org.restlet.Context;
-import org.restlet.data.MediaType;
-import org.restlet.data.Request;
-import org.restlet.data.Response;
-import org.restlet.data.Status;
-import org.restlet.resource.Representation;
-import org.restlet.resource.Resource;
-import org.restlet.resource.StringRepresentation;
-import org.restlet.resource.Variant;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
-import com.talis.platform.SystemTimestampProvider;
+import com.talis.jersey.exceptions.NotFoundException;
+import com.talis.jersey.exceptions.ServerErrorException;
 import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.Clock;
 import com.talis.platform.sequencing.NoSuchSequenceException;
-import com.talis.platform.sequencing.metrics.NullSequencingMetrics;
 import com.talis.platform.sequencing.metrics.SequencingMetrics;
 
-public class Sequence extends Resource {
+@Path("/seq/{key}")
+public class Sequence {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(Sequence.class);
-	public static final Variant VARIANT = new Variant(MediaType.TEXT_PLAIN);
 	
-	private final String myKey;
-	private Clock myClock;
-	private SequencingMetrics myMetrics;
-	private TimestampProvider myTimestampProvider;
+	private final Clock clock;
+	private final SequencingMetrics metrics;
+	private final TimestampProvider timestampProvider;
 	
 	@Inject
-	public Sequence(Context context, Request request, Response response) {
-		super(context, request, response);
-		myMetrics = new NullSequencingMetrics();
-		myTimestampProvider = new SystemTimestampProvider();
-		
-		SequenceServer.getInjector().injectMembers(this);
-		getVariants().add(new Variant(MediaType.TEXT_PLAIN));
-		myKey = "/" + (String)getRequest().getAttributes().get("key");
-	}
-	
-	@Inject
-    public void setClock(Clock clock){
-        myClock = clock;
-    }
-	
-	@Inject
-	public void setTimestampProvider(TimestampProvider provider){
-		myTimestampProvider = provider;
-	}
-	
-	@Inject
-	public void setMetrics(SequencingMetrics metrics){
-		myMetrics = metrics;
+	public Sequence(Clock clock, TimestampProvider timestampProvider, SequencingMetrics metrics) {
+		this.clock = clock;
+		this.timestampProvider = timestampProvider;
+		this.metrics = metrics;
 	}
 
-	@Override
-    public boolean allowGet() {
-        return true;
-    }
-	
-	@Override
-    public boolean allowPost() {
-        return true;
-    }
-
-    @Override
-	public void handleGet() {
-    	Response response = getResponse();
-    	response.getServerInfo()
-				.setAgent(SequenceServer.SERVER_IDENTIFIER);
-    	Representation rep = representGet(VARIANT);
-        response.setEntity(rep);
-	}
-
-	@Override
-    public void handlePost() {
-    	Response response = getResponse();
-    	response.getServerInfo()
-				.setAgent(SequenceServer.SERVER_IDENTIFIER);
-    	Representation rep = representPost(VARIANT);    	
-        response.setEntity(rep);
-    }
-	
-	public Representation representPost(Variant variant) {
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+	public String getCurrentSequence(@PathParam("key") String key) {
 		try {
-			if (LOG.isDebugEnabled()){
-				LOG.debug(String.format("Getting next sequence for key %s",  
-										myKey));
-			}
-			
-			long start = myTimestampProvider.getCurrentTimeInMillis();
-			Long sequence = myClock.getNextSequence(myKey);
-			long end = myTimestampProvider.getCurrentTimeInMillis();
-			myMetrics.recordSequenceWriteLatency(end - start);
-			
-			if (LOG.isDebugEnabled()){
-				LOG.debug(String.format("Next sequence for key %s is %s",  
-										myKey, sequence));
-			}
-			
-			return new StringRepresentation(sequence.toString(), 
-											MediaType.TEXT_PLAIN);
-		} catch (Exception e) {
-			myMetrics.incrementErrorResponses();
-			LOG.error(
-				String.format("Clock errored when incrementing sequence for key %s", 
-								myKey), e);
-			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, 
-									"Internal Error");
-			return new StringRepresentation(e.getMessage(), 
-									MediaType.TEXT_PLAIN);
-		}
-	}
-	
-	private Representation representGet(Variant variant) {
-		try {
-			if (LOG.isDebugEnabled()){
-				LOG.debug(String.format("Getting sequence for key %s",  
-										myKey));
-			}
-
-			long start = myTimestampProvider.getCurrentTimeInMillis();
-			Long sequence = myClock.getSequence(myKey);
-			long end = myTimestampProvider.getCurrentTimeInMillis();
-			myMetrics.recordSequenceReadLatency(end - start);
-			
-			if (LOG.isDebugEnabled()){
-				LOG.debug(String.format("Current sequence for key %s is %s",  
-										myKey, sequence));
-			}
-			
-			return new StringRepresentation(sequence.toString(), 
-											MediaType.TEXT_PLAIN);
+			key = "/" + key;
+			LOG.debug("Getting sequence for key {}", key);
+			long start = timestampProvider.getCurrentTimeInMillis();
+			Long sequence = clock.getSequence(key);
+			long end = timestampProvider.getCurrentTimeInMillis();
+			metrics.recordSequenceReadLatency(end - start);
+			LOG.debug("Current sequence for key {} is {}", key, sequence);
+			return sequence.toString();
 		} catch (NoSuchSequenceException e) {
 			// Don't add this to error metrics, as it's not really an error.
-			LOG.info(
-				String.format("Sequence for key %s not found", 
-								myKey), e);
-			getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
-			return new StringRepresentation(e.getMessage(), 
-					MediaType.TEXT_PLAIN);
+			LOG.info( String.format("Sequence for key %s not found", key), e);
+			throw new NotFoundException(e.getMessage());
 		} catch (Exception e) {
-			myMetrics.incrementReadErrorResponses();
-			LOG.error(
-				String.format("Clock errored when getting sequence for key %s", 
-								myKey), e);
-			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, 
-									"Internal Error");
-			return new StringRepresentation(e.getMessage(), 
-									MediaType.TEXT_PLAIN);
+			metrics.incrementReadErrorResponses();
+			LOG.error(String.format("Clock errored when getting sequence for key {}", key), e);
+			throw new ServerErrorException("Internal Error");
 		}
 	}
+
+	@POST
+	@Produces(MediaType.TEXT_PLAIN)
+    public String incrementSequence(@PathParam("key") String key) {
+		try {
+			key = "/" + key;
+			LOG.debug("Getting next sequence for key {}", key);
+			long start = timestampProvider.getCurrentTimeInMillis();
+			Long sequence = clock.getNextSequence(key);
+			long end = timestampProvider.getCurrentTimeInMillis();
+			metrics.recordSequenceWriteLatency(end - start);
+			LOG.debug("Next sequence for key {} is {}", key, sequence);
+			return sequence.toString();
+		} catch (Exception e) {
+			metrics.incrementErrorResponses();
+			LOG.error( String.format("Clock errored when incrementing sequence for key %s", key), e);
+			throw new ServerErrorException("Internal Error");
+		}
+    }
 }

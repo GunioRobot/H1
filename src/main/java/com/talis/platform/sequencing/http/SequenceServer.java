@@ -16,68 +16,37 @@
 
 package com.talis.platform.sequencing.http;
 
-import org.restlet.Component;
-import org.restlet.VirtualHost;
-import org.restlet.data.Protocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
-import com.talis.platform.NullInjector;
-import com.talis.platform.SystemTimestampProvider;
-import com.talis.platform.TimestampProvider;
-import com.talis.platform.sequencing.metrics.SequencingMetrics;
+import com.talis.jersey.HttpServer;
+import com.talis.jersey.guice.JerseyServletModule;
+import com.talis.platform.sequencing.BaseModule;
 import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 
 public class SequenceServer {
 	private static final Logger LOG = LoggerFactory.getLogger(SequenceServer.class);
 	
 	public static final String SERVER_IDENTIFIER = "H1 Server";
-	private static Injector INJECTOR = new NullInjector();
-	public static Injector getInjector(){
-		return INJECTOR;
-	}
+	private static final int DEFAULT_HTTP_PORT =9595;
 
-	public static Injector initInjector(){
-		return Guice.createInjector(
-				new ZooKeeperModule(),
-				new AbstractModule(){
-					@Override
-					protected void configure() {
-						bind(TimestampProvider.class)
-							.to(SystemTimestampProvider.class)
-							.in(Scopes.SINGLETON);
-					}
-				});
-	}
-	
-	public static void main(String[] args) {
-		int port = 9595;
+	@SuppressWarnings("PMD")
+	public static void main(String[] args) throws Exception {
+		int httpPort = DEFAULT_HTTP_PORT;
 		if (args.length > 0){
-			port = Integer.parseInt(args[0]);
+			httpPort = Integer.parseInt(args[0]);
 		}
-		LOG.info("Starting Service on port %s port");
-		
-		INJECTOR = initInjector();
-		INJECTOR.getInstance(SequencingMetrics.class);
-		Component myWebserver = new Component();
-	    myWebserver.getLogService().setEnabled(false);
-	    myWebserver.getServers().add(Protocol.HTTP, port);
-	    VirtualHost defaultHost = myWebserver.getDefaultHost();
-	               
-	    SequencingApplication sequencingApplication = 
-	    	new SequencingApplication();
-	    defaultHost.attach(sequencingApplication);
-	        
-	    try{
-	    	myWebserver.start();    
-	    }catch(Exception e){
-	    	LOG.error("Unable to start webserver", e);
-	    }
+
+		Injector injector = Guice.createInjector(
+									new ZooKeeperModule(),
+									new BaseModule(),
+									new JerseyServletModule("com.talis.platform.sequencing"));
+				 
+		LOG.info("Starting webserver on port %s ", httpPort);
+		HttpServer webserver = new HttpServer();
+        webserver.start(httpPort, injector);    
 	    LOG.info("Service Started");
 	}
-
 }

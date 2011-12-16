@@ -16,8 +16,10 @@
 
 package com.talis.platform;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.inject.Binding;
 import com.google.inject.Injector;
@@ -25,7 +27,9 @@ import com.google.inject.Key;
 import com.google.inject.MembersInjector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.Scope;
 import com.google.inject.TypeLiteral;
+import com.google.inject.spi.TypeConverterBinding;
 
 public class NullInjector implements Injector{
     @Override
@@ -95,6 +99,26 @@ public class NullInjector implements Injector{
 
 	@Override
 	public Injector getParent() {
+		return null;
+	}
+
+	@Override
+	public Map<Key<?>, Binding<?>> getAllBindings() {
+		return null;
+	}
+
+	@Override
+	public <T> Binding<T> getExistingBinding(Key<T> key) {
+		return null;
+	}
+
+	@Override
+	public Map<Class<? extends Annotation>, Scope> getScopeBindings() {
+		return null;
+	}
+
+	@Override
+	public Set<TypeConverterBinding> getTypeConverterBindings() {
 		return null;
 	}
 }
