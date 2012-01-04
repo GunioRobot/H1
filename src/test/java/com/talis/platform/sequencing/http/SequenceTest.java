@@ -16,19 +16,19 @@
 
 package com.talis.platform.sequencing.http;
 
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.createStrictMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
 
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.talis.jersey.exceptions.BadRequestException;
 import com.talis.jersey.exceptions.NotFoundException;
 import com.talis.jersey.exceptions.ServerErrorException;
 import com.talis.platform.SystemTimestampProvider;
@@ -43,10 +43,14 @@ public class SequenceTest {
 
 	String key;
 	String fullKey;
+	String otherKey;
+	String otherFullKey;
 	TimestampProvider timestampProvider;
 	Clock clock;
 	SequencingMetrics metrics;
 	
+	TimestampProvider mockProvider;
+	SequencingMetrics mockMetrics;
 	
 	@Before
 	public void setup(){
@@ -54,11 +58,21 @@ public class SequenceTest {
 		timestampProvider = new SystemTimestampProvider();
 		key = UUID.randomUUID().toString();
 		fullKey = "/" + key;
+		otherKey = UUID.randomUUID().toString();
+		otherFullKey = "/" + otherKey;
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		replay(mockMetrics);
 	}
 	
 	@After
 	public void teardown(){
 		verify(clock);
+		verify(mockProvider);
+		verify(mockMetrics);
 	}
 	
 	@Test
@@ -75,7 +89,7 @@ public class SequenceTest {
 	@Test
 	public void recordSequenceIncrementLatencyViaMetricsObject() 
 	throws Exception{
-		clock = createNiceMock(Clock.class);
+		clock = createMock(Clock.class);
 		expect(clock.getNextSequence(fullKey)).andReturn(999l);
 		replay(clock);
 		
@@ -116,7 +130,7 @@ public class SequenceTest {
 	
 	@Test (expected=ServerErrorException.class)
 	public void incrementClockErrorsViaMetricsObject() throws Exception {
-		clock = createNiceMock(Clock.class);
+		clock = createMock(Clock.class);
 		expect(clock.getNextSequence(fullKey)).andThrow(new RuntimeException("KABOOM!"));
 		replay(clock);
 		
@@ -156,7 +170,7 @@ public class SequenceTest {
     
 	@Test (expected=ServerErrorException.class)
 	public void incrementClockReadErrorsViaMetricsObject() throws Exception{
-		clock = createNiceMock(Clock.class);
+		clock = createMock(Clock.class);
 		expect(clock.getSequence(fullKey)).andThrow(new RuntimeException("KABOOM!"));
 		replay(clock);
 		
@@ -173,25 +187,186 @@ public class SequenceTest {
 	}
 	
 	@Test
-	public void getSequenceIncrementLatencyViaMetricsObject() throws Exception{
-		clock = createNiceMock(Clock.class);
+	public void getCurrentSequenceIncrementsLatencyViaMetricsObject() throws Exception{
+		clock = createMock(Clock.class);
 		expect(clock.getSequence(fullKey)).andReturn(999l);
 		replay(clock);
 		
-		TimestampProvider mockProvider = createStrictMock(TimestampProvider.class);
+		mockProvider = createStrictMock(TimestampProvider.class);
 		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
 		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
 		replay(mockProvider);
 		
-		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics = createStrictMock(SequencingMetrics.class);
 		mockMetrics.recordSequenceReadLatency(50l);
 		replay(mockMetrics);
 		
 		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
-		try{
-			resource.getCurrentSequence(key);
-		}catch(Exception e){
-			e.printStackTrace();
+		String sequence = resource.getCurrentSequence(key);
+		assertEquals("999", sequence);
+	}
+	
+	@Test
+	public void queryCurrentSequenceIncrementsLatencyViaMetricsObject() throws Exception{
+		Long expectedKeySeq = 1066l;
+		
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(expectedKeySeq);
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		replay(mockMetrics);
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(key);
+		Map<String, Long> currentSequences = resource.getCurrentSequences(keys);
+		assertEquals(expectedKeySeq, currentSequences.get(key));
+	}
+	
+	@Test
+	public void getCurrentSequencesIncrementsLatencyViaMetricsObject() throws Exception{
+		Long expectedKeySeq = 42l;
+		Long expectedOtherKeySeq = 1066l;
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(expectedKeySeq);
+		expect(clock.getSequence(otherFullKey)).andReturn(expectedOtherKeySeq);
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(200l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(270l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		mockMetrics.recordSequenceReadLatency(70l);
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(key);
+		keys.add(otherKey);
+		Map<String, Long> currentSequences = resource.getCurrentSequences(keys);
+		assertEquals(expectedKeySeq, currentSequences.get(key));
+		assertEquals(expectedOtherKeySeq, currentSequences.get(otherKey));
+	}
+		
+	@Test(expected = ServerErrorException.class)
+	public void getCurrentSequencesWhenFirstErrors() throws Exception{
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(anyObject(String.class))).andThrow(new SequencingException("BOOM!", null));
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		replay(mockProvider);
+		
+		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.incrementReadErrorResponses();
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(otherKey);
+		keys.add(key);
+		
+		assertQuerySequencesFailsWithCorrectErrorMessage(resource, keys);
+	}
+	
+	@Test(expected = ServerErrorException.class)
+	public void getCurrentSequencesWhenSecondErrors() throws Exception{
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(anyObject(String.class))).andReturn(42l);
+		expect(clock.getSequence(anyObject(String.class))).andThrow(new SequencingException("BOOM!", null));
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(200l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		mockMetrics.incrementReadErrorResponses();
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(otherKey);
+		keys.add(key);
+		
+		assertQuerySequencesFailsWithCorrectErrorMessage(resource, keys);
+	}
+	
+	@Test
+	public void getCurrentSequencesTranslatesMissingSequenceIntoMinusOne() throws Exception{
+		Long expectedSequence = 42l;
+		Long expectedOtherSequence = -1l;
+		
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(expectedSequence);
+		expect(clock.getSequence(otherFullKey)).andThrow(new NoSuchSequenceException("BOOM!", null));
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(200l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(otherKey);
+		keys.add(key);
+		
+		Map<String, Long> currentSequences = resource.getCurrentSequences(keys);
+		
+		assertEquals(expectedSequence, currentSequences.get(key));
+		assertEquals(expectedOtherSequence, currentSequences.get(otherKey));
+	}
+
+	private void assertQuerySequencesFailsWithCorrectErrorMessage(
+			Sequence resource, SortedSet<String> keys) throws Exception {
+		try {
+			resource.getCurrentSequences(keys);
+		} catch (Exception e) {
+			assertTrue(e.getMessage().contains("Internal Error while accessing sequence"));
+			assertTrue(e.getMessage().contains(otherKey) ^ e.getMessage().contains(key));
+			throw e;
 		}
 	}
+	
+	@Test(expected = BadRequestException.class)
+	public void getCurrentSequencesForEmpty() throws Exception{
+		clock = createMock(Clock.class);
+		replay(clock);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		resource.getCurrentSequences(keys);	
+	}
+	
+	@Test(expected = BadRequestException.class)
+	public void getCurrentSequencesForNull() throws Exception{
+		clock = createMock(Clock.class);
+		replay(clock);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		resource.getCurrentSequences(null);	
+	}
+	
+	
 }
