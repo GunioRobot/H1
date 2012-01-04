@@ -45,6 +45,7 @@ import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,9 @@ public class ZkClockTest {
 
 	public static final Logger LOG = LoggerFactory.getLogger(ZkClockTest.class);
 	
-	private ZkTestHelper myTestHelper;
+	@Rule
+	public final EmbeddedZookeeper embeddedZookeeper = new EmbeddedZookeeper();
+	
 	private ZooKeeper myKeeper;
 	private ZooKeeperProvider myKeeperProvider;
 	private String key;
@@ -71,19 +74,9 @@ public class ZkClockTest {
 	
 	@Before 
 	public void setup() throws Exception{
-		myTestHelper = new ZkTestHelper();
-		myTestHelper.startServer();
-		myKeeper = new ZooKeeper(	ZkTestHelper.DEFAULT_HOST_PORT, 
-            						ZkTestHelper.CONNECTION_TIMEOUT, 
-            						new NullWatcher());
+		myKeeper = embeddedZookeeper.getZookeeper();
 		myKeeperProvider = getProviderForZooKeeper(myKeeper);
 		key = String.format("/test-key-%s-%s", KEY_SEED, TEST_INDEX++);
-	}
-	
-	@After
-	public void tearDown() throws Exception{
-		myKeeper.close();		
-		myTestHelper.cleanUp();
 	}
 	
 	@Test
@@ -218,9 +211,9 @@ public class ZkClockTest {
 	public void clockSurvivesDisconnectionFromServer() throws Exception{
 		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		assertEquals(0, clock.getNextSequence(key));
-		myTestHelper.stopServer();
+		embeddedZookeeper.stopServer();
 		Thread.sleep(5000l);
-		myTestHelper.startServer();
+		embeddedZookeeper.startServer();
 		assertEquals(1, clock.getNextSequence(key));
 	}
 	
@@ -230,7 +223,7 @@ public class ZkClockTest {
 		System.setProperty(ZkClock.RETRY_COUNT_PROPERTY, "2");
 		ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 		assertEquals(0, clock.getNextSequence(key));
-		myTestHelper.stopServer();
+		embeddedZookeeper.stopServer();
 		Thread.sleep(5000l);
 		try{
 			clock.getNextSequence(key);
@@ -238,7 +231,7 @@ public class ZkClockTest {
 		}catch(Exception e){
 			assertTrue(e instanceof SequencingException);
 		}
-		myTestHelper.startServer();
+		embeddedZookeeper.startServer();
 		assertEquals(1, clock.getNextSequence(key));
 	}
 	
@@ -248,9 +241,9 @@ public class ZkClockTest {
 		try{
 			ZkClock clock = new ZkClock(myKeeperProvider, new NullMetrics());
 			assertEquals(0, clock.getNextSequence(key));
-			myTestHelper.stopServer();
+			embeddedZookeeper.stopServer();
 			Thread.sleep(300l);
-			myTestHelper.startServer();
+			embeddedZookeeper.startServer();
 			assertEquals(1, clock.getNextSequence(key));
 		}finally{
 			System.clearProperty(ZooKeeperProvider.SESSION_TIMEOUT_PROPERTY);

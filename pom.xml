@@ -25,7 +25,7 @@
  
   <properties>
     <talis-jmx.version>1.0.5</talis-jmx.version>
-    <jersey-common.version>1.1</jersey-common.version>
+    <jersey-common.version>1.4</jersey-common.version>
     <jdk.version>1.6</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -108,7 +108,6 @@
       <version>${jersey-common.version}</version>
     </dependency>
 
-
     <dependency>
       <groupId>com.talis</groupId>
       <artifactId>talis-jmx</artifactId>
@@ -176,6 +175,13 @@
       <version>0.1.1</version>
       <scope>system</scope>
       <systemPath>${basedir}/lib/definalizer-0.1.1.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.1.1</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
@@ -301,6 +307,20 @@ repository.version=${repository.version}
             <argLine>-javaagent:${basedir}/lib/definalizer-0.1.1.jar</argLine>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>failsafe-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

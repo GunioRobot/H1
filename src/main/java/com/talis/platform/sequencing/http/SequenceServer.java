@@ -26,27 +26,52 @@ import com.talis.jersey.guice.JerseyServletModule;
 import com.talis.platform.sequencing.BaseModule;
 import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 
+@SuppressWarnings("PMD")
 public class SequenceServer {
 	private static final Logger LOG = LoggerFactory.getLogger(SequenceServer.class);
 	
-	public static final String SERVER_IDENTIFIER = "H1 Server";
 	private static final int DEFAULT_HTTP_PORT =9595;
+	
+	private final int httpPort;
+	private HttpServer webserver;
+	
+	public SequenceServer(int httpPort) {
+		this.httpPort = httpPort;
+	}
 
-	@SuppressWarnings("PMD")
+	public void start() throws Exception {
+		Injector injector = Guice.createInjector(
+				new ZooKeeperModule(),
+				new BaseModule(),
+				new JerseyServletModule("com.talis.platform.sequencing"));
+
+		LOG.info("Starting webserver on port %s ", httpPort);
+		webserver = new HttpServer();
+		webserver.start(httpPort, injector);    
+		LOG.info("Service Started");
+	}
+	
+	public void stop() throws Exception {
+		if (null == webserver) {
+			throw new IllegalStateException("Cannot stop server, as it has not been started");
+		}
+		webserver.stop();
+	}
+
+	public boolean isRunning() {
+		if (webserver != null) {
+			return webserver.isRunning();
+		} else {
+			return false;
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
 		int httpPort = DEFAULT_HTTP_PORT;
 		if (args.length > 0){
 			httpPort = Integer.parseInt(args[0]);
 		}
-
-		Injector injector = Guice.createInjector(
-									new ZooKeeperModule(),
-									new BaseModule(),
-									new JerseyServletModule("com.talis.platform.sequencing"));
-				 
-		LOG.info("Starting webserver on port %s ", httpPort);
-		HttpServer webserver = new HttpServer();
-        webserver.start(httpPort, injector);    
-	    LOG.info("Service Started");
+		SequenceServer server = new SequenceServer(httpPort);
+		server.start();
 	}
 }
