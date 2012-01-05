@@ -170,21 +170,13 @@
     </dependency>
 
     <dependency>
-      <groupId>definalizer</groupId>
-      <artifactId>definalizer</artifactId>
-      <version>0.1.1</version>
-      <scope>system</scope>
-      <systemPath>${basedir}/lib/definalizer-0.1.1.jar</systemPath>
-    </dependency>
-
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.1.1</version>
       <scope>test</scope>
     </dependency>
 
-  </dependencies>
+   </dependencies>
  
   <build>
   
@@ -303,9 +295,6 @@ repository.version=${repository.version}
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-            <argLine>-javaagent:${basedir}/lib/definalizer-0.1.1.jar</argLine>
-        </configuration>
       </plugin>
 
       <plugin>
