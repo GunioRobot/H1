@@ -54,7 +54,7 @@
             <executions>
               <execution>
                 <id>rsync-debian-package</id>
-                <phase>verify</phase>
+                <phase>deploy</phase>
                 <configuration>
                   <tasks>
                     <exec executable="/usr/bin/rsync" spawn="false" dir="${project.build.directory}" failonerror="true">
