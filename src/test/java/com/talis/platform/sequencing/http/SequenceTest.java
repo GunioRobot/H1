@@ -207,7 +207,7 @@ public class SequenceTest {
 	}
 	
 	@Test
-	public void queryCurrentSequenceIncrementsLatencyViaMetricsObject() throws Exception{
+	public void getCurrentSequencesIncrementsLatencyViaMetricsObject() throws Exception{
 		Long expectedKeySeq = 1066l;
 		
 		clock = createMock(Clock.class);
@@ -230,7 +230,7 @@ public class SequenceTest {
 	}
 	
 	@Test
-	public void getCurrentSequencesIncrementsLatencyViaMetricsObject() throws Exception{
+	public void getCurrentSequencesIncrementsLatencyViaMetricsObjectForOtherKey() throws Exception{
 		Long expectedKeySeq = 42l;
 		Long expectedOtherKeySeq = 1066l;
 		clock = createMock(Clock.class);
@@ -338,7 +338,120 @@ public class SequenceTest {
 		assertEquals(expectedOtherSequence, currentSequences.get(otherKey));
 	}
 
+	@Test
+	public void getCurrentSequencesByFormPostIncrementsLatencyViaMetricsObject() throws Exception{
+		Long expectedKeySeq = 1066l;
+		
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(expectedKeySeq);
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		replay(mockMetrics);
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(key);
+		Map<String, Long> currentSequences = resource.getCurrentSequencesByFormPost(keys);
+		assertEquals(expectedKeySeq, currentSequences.get(key));
+	}
+		
+	@Test(expected = ServerErrorException.class)
+	public void getCurrentSequencesByFormPostWhenFirstErrors() throws Exception{
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(anyObject(String.class))).andThrow(new SequencingException("BOOM!", null));
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		replay(mockProvider);
+		
+		SequencingMetrics mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.incrementReadErrorResponses();
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(otherKey);
+		keys.add(key);
+		
+		assertQuerySequencesByFormPostFailsWithCorrectErrorMessage(resource, keys);
+	}
+	
+	@Test(expected = ServerErrorException.class)
+	public void getCurrentSequencesByFormPostWhenSecondErrors() throws Exception{
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(anyObject(String.class))).andReturn(42l);
+		expect(clock.getSequence(anyObject(String.class))).andThrow(new SequencingException("BOOM!", null));
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(200l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		mockMetrics.incrementReadErrorResponses();
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(otherKey);
+		keys.add(key);
+		
+		assertQuerySequencesByFormPostFailsWithCorrectErrorMessage(resource, keys);
+	}
+	
+	@Test
+	public void getCurrentSequencesByFormPostTranslatesMissingSequenceIntoMinusOne() throws Exception{
+		Long expectedSequence = 42l;
+		Long expectedOtherSequence = -1l;
+		
+		clock = createMock(Clock.class);
+		expect(clock.getSequence(fullKey)).andReturn(expectedSequence);
+		expect(clock.getSequence(otherFullKey)).andThrow(new NoSuchSequenceException("BOOM!", null));
+		replay(clock);
+		
+		mockProvider = createStrictMock(TimestampProvider.class);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(100l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(150l);
+		expect(mockProvider.getCurrentTimeInMillis()).andReturn(200l);
+		replay(mockProvider);
+		
+		mockMetrics = createStrictMock(SequencingMetrics.class);
+		mockMetrics.recordSequenceReadLatency(50l);
+		replay(mockMetrics);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		keys.add(otherKey);
+		keys.add(key);
+		
+		Map<String, Long> currentSequences = resource.getCurrentSequencesByFormPost(keys);
+		
+		assertEquals(expectedSequence, currentSequences.get(key));
+		assertEquals(expectedOtherSequence, currentSequences.get(otherKey));
+	}
+
 	private void assertQuerySequencesFailsWithCorrectErrorMessage(
+			Sequence resource, SortedSet<String> keys) throws Exception {
+		try {
+			resource.getCurrentSequences(keys);
+		} catch (Exception e) {
+			assertTrue(e.getMessage().contains("Internal Error while accessing sequence"));
+			assertTrue(e.getMessage().contains(otherKey) ^ e.getMessage().contains(key));
+			throw e;
+		}
+	}
+
+	private void assertQuerySequencesByFormPostFailsWithCorrectErrorMessage(
 			Sequence resource, SortedSet<String> keys) throws Exception {
 		try {
 			resource.getCurrentSequences(keys);
@@ -368,5 +481,22 @@ public class SequenceTest {
 		resource.getCurrentSequences(null);	
 	}
 	
+	@Test(expected = BadRequestException.class)
+	public void getCurrentSequencesByFormPostForEmpty() throws Exception{
+		clock = createMock(Clock.class);
+		replay(clock);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		SortedSet<String> keys = new TreeSet<String>();
+		resource.getCurrentSequencesByFormPost(keys);	
+	}
 	
+	@Test(expected = BadRequestException.class)
+	public void getCurrentSequencesByFormPostForNull() throws Exception{
+		clock = createMock(Clock.class);
+		replay(clock);
+		
+		Sequence resource = new Sequence(clock, mockProvider, mockMetrics);
+		resource.getCurrentSequencesByFormPost(null);	
+	}
 }

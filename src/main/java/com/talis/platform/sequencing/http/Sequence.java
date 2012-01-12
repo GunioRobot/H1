@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -77,6 +79,13 @@ public class Sequence {
 			results.put(key, currentSequence);
 		}
 		return results;
+	}
+	
+    @POST		
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)		
+	@Produces(MediaType.APPLICATION_JSON)	
+	public Map<String, Long> getCurrentSequencesByFormPost(@FormParam("key") SortedSet<String> keys) {		
+    	return getCurrentSequences(keys);		
 	}
 	
     @GET

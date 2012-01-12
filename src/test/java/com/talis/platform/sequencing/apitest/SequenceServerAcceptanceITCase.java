@@ -3,16 +3,23 @@ package com.talis.platform.sequencing.apitest;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -95,6 +102,67 @@ public class SequenceServerAcceptanceITCase {
 		incrementKeysForQuery();
 		// Test
 		HttpGet get = new HttpGet(buildQueryUri(key1));
+		assertQueryKeysWithSingleKeyReturnsSequence(get);
+	}
+	
+	@Test
+	public void queryKeysWithSingleKeyByPost() throws Exception {
+		incrementKeysForQuery();
+		// Test
+		HttpPost post = buildPostQuery(key1);
+		assertQueryKeysWithSingleKeyReturnsSequence(post);
+	}
+	
+	@Test
+	public void queryKeys() throws Exception {
+		incrementKeysForQuery();
+		// Test
+		HttpGet get = new HttpGet(buildQueryUri(key1, key2));
+		assertQueryKeysReturnsSequences(get);
+	}
+	
+	@Test
+	public void queryKeysByPost() throws Exception {
+		incrementKeysForQuery();
+		// Test
+		HttpPost post = buildPostQuery(key1, key2);
+		assertQueryKeysReturnsSequences(post);
+	}
+	
+	@Test
+	public void queryKeysWithNoKeys() throws Exception {
+		HttpGet get = new HttpGet(buildQueryUri());
+		assertQueryKeysWithNoKeysErrors(get);
+	}
+	
+	@Test
+	public void queryKeysWithNoKeysByPost() throws Exception {
+		HttpPost post = buildPostQuery();
+		assertQueryKeysWithNoKeysErrors(post);
+	}
+	
+	@Test
+	public void queryWithMissingKey() throws Exception {
+		// Setup
+		incrementKey(key1);
+		String missingKey = "missing";
+		// Test
+		HttpGet get = new HttpGet(buildQueryUri(key1, missingKey));
+		assertQueryWithMissingKeyIsNegative(get, missingKey);
+	}
+	
+	@Test
+	public void queryWithMissingKeyByPost() throws Exception {
+		// Setup
+		incrementKey(key1);
+		String missingKey = "missing";
+		// Test
+		HttpPost post = buildPostQuery(key1, missingKey);
+		assertQueryWithMissingKeyIsNegative(post, missingKey);
+	}
+
+	private void assertQueryKeysWithSingleKeyReturnsSequence(HttpUriRequest get)
+			throws IOException, ClientProtocolException, JSONException {
 		HttpResponse response = httpClient.execute(get);
 		try {
 			assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -105,12 +173,9 @@ public class SequenceServerAcceptanceITCase {
 			EntityUtils.consume(response.getEntity());
 		}
 	}
-	
-	@Test
-	public void queryKeys() throws Exception {
-		incrementKeysForQuery();
-		// Test
-		HttpGet get = new HttpGet(buildQueryUri(key1, key2));
+
+	private void assertQueryKeysReturnsSequences(HttpUriRequest get)
+			throws IOException, ClientProtocolException, JSONException {
 		HttpResponse response = httpClient.execute(get);
 		try {
 			assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -122,10 +187,9 @@ public class SequenceServerAcceptanceITCase {
 			EntityUtils.consume(response.getEntity());
 		}
 	}
-	
-	@Test
-	public void queryKeysWithNoKeys() throws Exception {
-		HttpGet get = new HttpGet(buildQueryUri());
+
+	private void assertQueryKeysWithNoKeysErrors(HttpUriRequest get)
+			throws IOException, ClientProtocolException {
 		HttpResponse response = httpClient.execute(get);
 		try {
 			assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
@@ -133,16 +197,6 @@ public class SequenceServerAcceptanceITCase {
 		} finally {
 			EntityUtils.consume(response.getEntity());
 		}
-	}
-	
-	@Test
-	public void queryWithMissingKey() throws Exception {
-		// Setup
-		incrementKey(key1);
-		String missingKey = "missing";
-		// Test
-		HttpGet get = new HttpGet(buildQueryUri(key1, missingKey));
-		assertQueryWithMissingKeyIsNegative(get, missingKey);
 	}
 	
 	private void incrementKeysForQuery() throws Exception {
@@ -225,6 +279,10 @@ public class SequenceServerAcceptanceITCase {
 	private String buildUri(String key) {
 		return String.format("http://localhost:%d/seq/%s", httpPort, key);
 	}
+	
+	private String buildBaseUri() {
+		return String.format("http://localhost:%d/seq/", httpPort);
+	}
 
 	private String buildQueryUri(String... keys) {
 		StringBuilder uriBuilder = new StringBuilder();
@@ -235,5 +293,15 @@ public class SequenceServerAcceptanceITCase {
 			uriBuilder.append("&");
 		}
 		return uriBuilder.toString();
+	}
+
+	private HttpPost buildPostQuery(String... keys) throws UnsupportedEncodingException {
+		HttpPost post = new HttpPost(buildBaseUri());
+		final List <NameValuePair> parameters = new ArrayList<NameValuePair>();
+		for (String key : keys) {
+			parameters.add(new BasicNameValuePair("key", key));
+		}
+		post.setEntity(new UrlEncodedFormEntity(parameters));
+		return post;
 	}
 }
