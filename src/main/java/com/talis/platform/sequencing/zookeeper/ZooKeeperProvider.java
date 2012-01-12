@@ -99,7 +99,7 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 				}
 			}
 		}else{
-			LOG.info("Returing cached ZooKeeper instance");
+			LOG.info("Returning cached ZooKeeper instance");
 		}
 		return zookeeper;
 	}

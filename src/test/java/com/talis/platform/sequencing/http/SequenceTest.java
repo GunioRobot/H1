@@ -29,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.talis.jersey.exceptions.BadRequestException;
-import com.talis.jersey.exceptions.NotFoundException;
 import com.talis.jersey.exceptions.ServerErrorException;
 import com.talis.platform.SystemTimestampProvider;
 import com.talis.platform.TimestampProvider;
@@ -157,15 +156,15 @@ public class SequenceTest {
 		verify(clock);
 	}
     
-    @Test (expected=NotFoundException.class)
-	public void getReturns404WhenNoSuchSequenceExceptionIsThrown() throws Exception { 
+    @Test
+	public void getReturnsNegativeOneWhenNoSuchSequenceExceptionIsThrown() throws Exception { 
 		clock = createStrictMock(Clock.class);
 		Exception ex = new NoSuchSequenceException("BOOM!", null);
 		expect(clock.getSequence(fullKey)).andThrow(ex);
 		replay(clock);
 		
 		Sequence resource = new Sequence(clock, timestampProvider, metrics);
-		resource.getCurrentSequence(key);
+		assertEquals("-1", resource.getCurrentSequence(key));
 	}
     
 	@Test (expected=ServerErrorException.class)

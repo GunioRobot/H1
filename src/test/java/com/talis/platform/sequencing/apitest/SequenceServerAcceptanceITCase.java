@@ -1,6 +1,7 @@
 package com.talis.platform.sequencing.apitest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -8,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -46,14 +46,14 @@ public class SequenceServerAcceptanceITCase {
 	public final EmbeddedZookeeper embeddedZookeeper = new EmbeddedZookeeper();
 		
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() throws Exception {				
+		System.setProperty(ZooKeeperProvider.SERVER_LIST_LOCATION_PROPERTY, embeddedZookeeper.getZkServersFileLocation());
+		System.setProperty(ZooKeeperProvider.SESSION_TIMEOUT_PROPERTY, "100");
+		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "30000");
+
 		httpPort = NetworkUtils.findFreePort();
 		sequenceServer = new SequenceServer(httpPort);
 		sequenceServer.start();
-		
-		System.setProperty(ZooKeeperProvider.SERVER_LIST_LOCATION_PROPERTY, embeddedZookeeper.getZkServersFileLocation());
-		System.setProperty(ZooKeeperProvider.SESSION_TIMEOUT_PROPERTY, "100");
-		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "100");
 	}
 
 	@After
@@ -68,20 +68,21 @@ public class SequenceServerAcceptanceITCase {
 	}
 	
 	@Test
-	public void getUnknownSequenceReturns404() throws Exception {
-		assertNotFound("unknownSequence");
-	}
+	public void getUnknownSequenceReturnsMinusOne() throws Exception {
+		assertGetMissingKeyIsMinusOne("unknownSequence");
+	}	
 	
 	@Test
 	public void getSequenceWhenZookeeperUnavailable() throws Exception {
+		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "100");
 		embeddedZookeeper.stopServer();
-		assertInternalError("unknownSequence");
+		assertInternalError("anySequence");
 	}
 	
 	@Test
 	public void postToUnknownCreatesSequence() throws Exception {
 		String key = "newKey";
-		assertNotFound(key);
+		assertGetMissingKeyIsMinusOne(key);
 		long newSequence = incrementKey(key);
 		assertEquals(0, newSequence);
 		assertSequenceValue(newSequence, key);
@@ -90,7 +91,7 @@ public class SequenceServerAcceptanceITCase {
 	@Test
 	public void postIncrementsExistingSequence() throws Exception {
 		String key = "anotherKey";
-		assertNotFound(key);
+		assertGetMissingKeyIsMinusOne(key);
 		assertEquals(0, incrementKey(key));
 		assertEquals(1, incrementKey(key));
 		assertEquals(2, incrementKey(key));
@@ -205,9 +206,13 @@ public class SequenceServerAcceptanceITCase {
 		incrementKey(key2);
 	}
 	
-	private void assertNotFound(String key)
+	private void assertGetMissingKeyIsMinusOne(String key)
 			throws Exception {
-		assertExpectedStatusForGet(HttpStatus.SC_NOT_FOUND, key);
+		HttpGet get = new HttpGet(buildUri("unknownSequence"));
+		HttpResponse response = httpClient.execute(get);
+		assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		String returnedValue = IOUtils.toString(response.getEntity().getContent());
+		assertEquals("-1", returnedValue);
 	}
 
 	private void assertQueryWithMissingKeyIsNegative(HttpUriRequest req, String missingKey)

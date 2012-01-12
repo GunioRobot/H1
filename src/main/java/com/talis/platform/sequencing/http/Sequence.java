@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.talis.jersey.exceptions.BadRequestException;
-import com.talis.jersey.exceptions.NotFoundException;
 import com.talis.jersey.exceptions.ServerErrorException;
 import com.talis.platform.TimestampProvider;
 import com.talis.platform.sequencing.Clock;
@@ -70,13 +69,7 @@ public class Sequence {
 		LOG.debug("Starting query for keys {}", keys);
 		Map<String, Long> results = new HashMap<String, Long>();
 		for (String key : keys) {
-			Long currentSequence;
-			try {
-				currentSequence = getSequence(key);
-			} catch (NotFoundException e) {
-				currentSequence = DEFAULT_SEQUENCE;
-			}
-			results.put(key, currentSequence);
+			results.put(key, getSequence(key));
 		}
 		return results;
 	}
@@ -128,8 +121,8 @@ public class Sequence {
 			return sequence;
 		} catch (NoSuchSequenceException e) {
 			// Don't add this to error metrics, as it's not really an error.
-			LOG.info( String.format("Sequence for key %s not found", key), e);
-			throw new NotFoundException(e.getMessage());
+			LOG.info( String.format("Sequence for key %s not found. Returning -1", key), e);
+			return DEFAULT_SEQUENCE;
 		} catch (Exception e) {
 			metrics.incrementReadErrorResponses();
 			LOG.error(String.format("Clock errored when getting sequence for key {}", key), e);

@@ -1,6 +1,11 @@
 package com.talis.platform.sequencing.zookeeper;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZooKeeper;
@@ -15,10 +20,10 @@ public class EmbeddedZookeeper extends ExternalResource {
 	private File zkServersFile;
 	
 	@Override
-	protected void before() throws Throwable {
+	protected synchronized void before() throws Throwable {
 		tmpFolder.create();
 		zkTestHelper = new ZkTestHelper();
-		zkTestHelper.startServer();
+		startServer();
 		zooKeeper = new ZooKeeper(	ZkTestHelper.DEFAULT_HOST_PORT, 
             						ZkTestHelper.CONNECTION_TIMEOUT, 
             						new NullWatcher());
@@ -27,7 +32,7 @@ public class EmbeddedZookeeper extends ExternalResource {
 	}
 
 	@Override
-	protected void after() {
+	protected synchronized void after() {
 		tmpFolder.delete();
 		try {
 			zooKeeper.close();
@@ -35,14 +40,17 @@ public class EmbeddedZookeeper extends ExternalResource {
 		} catch (Exception e) {
 			throw new RuntimeException("Exception in teardown", e);
 		}		
+		zkTestHelper.waitForServerDown(ZkTestHelper.DEFAULT_HOST_PORT, 10000);
 	}
 
-	public void startServer() throws Exception {
+	public synchronized void startServer() throws Exception {
 		zkTestHelper.startServer();
+		zkTestHelper.waitForServerUp(ZkTestHelper.DEFAULT_HOST_PORT, 10000);
 	}
 	
-	public void stopServer() throws Exception {
+	public synchronized void stopServer() throws Exception {
 		zkTestHelper.stopServer();		
+		zkTestHelper.waitForServerDown(ZkTestHelper.DEFAULT_HOST_PORT, 10000);
 	}
 
 	public ZooKeeper getZookeeper() {
