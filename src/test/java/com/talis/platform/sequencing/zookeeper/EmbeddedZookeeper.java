@@ -13,19 +13,19 @@ import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
 public class EmbeddedZookeeper extends ExternalResource {
-	
+
 	private TemporaryFolder tmpFolder = new TemporaryFolder();
 	private ZkTestHelper zkTestHelper;
 	private ZooKeeper zooKeeper;
 	private File zkServersFile;
-	
+
 	@Override
 	protected synchronized void before() throws Throwable {
 		tmpFolder.create();
 		zkTestHelper = new ZkTestHelper();
 		startServer();
-		zooKeeper = new ZooKeeper(	ZkTestHelper.DEFAULT_HOST_PORT, 
-            						ZkTestHelper.CONNECTION_TIMEOUT, 
+		zooKeeper = new ZooKeeper(	ZkTestHelper.DEFAULT_HOST_PORT,
+            						ZkTestHelper.CONNECTION_TIMEOUT,
             						new NullWatcher());
 		zkServersFile = new File(tmpFolder.getRoot(), "zkServers");
 		FileUtils.write(zkServersFile, ZkTestHelper.DEFAULT_HOST_PORT + "\n");
@@ -39,7 +39,7 @@ public class EmbeddedZookeeper extends ExternalResource {
 			zkTestHelper.cleanUp();
 		} catch (Exception e) {
 			throw new RuntimeException("Exception in teardown", e);
-		}		
+		}
 		zkTestHelper.waitForServerDown(ZkTestHelper.DEFAULT_HOST_PORT, 10000);
 	}
 
@@ -47,9 +47,9 @@ public class EmbeddedZookeeper extends ExternalResource {
 		zkTestHelper.startServer();
 		zkTestHelper.waitForServerUp(ZkTestHelper.DEFAULT_HOST_PORT, 10000);
 	}
-	
+
 	public synchronized void stopServer() throws Exception {
-		zkTestHelper.stopServer();		
+		zkTestHelper.stopServer();
 		zkTestHelper.waitForServerDown(ZkTestHelper.DEFAULT_HOST_PORT, 10000);
 	}
 

@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,12 +29,12 @@ import com.talis.platform.sequencing.zookeeper.ZooKeeperModule;
 @SuppressWarnings("PMD")
 public class SequenceServer {
 	private static final Logger LOG = LoggerFactory.getLogger(SequenceServer.class);
-	
+
 	private static final int DEFAULT_HTTP_PORT =9595;
-	
+
 	private final int httpPort;
 	private HttpServer webserver;
-	
+
 	public SequenceServer(int httpPort) {
 		this.httpPort = httpPort;
 	}
@@ -47,10 +47,10 @@ public class SequenceServer {
 
 		LOG.info("Starting webserver on port %s ", httpPort);
 		webserver = new HttpServer();
-		webserver.start(httpPort, injector);    
+		webserver.start(httpPort, injector);
 		LOG.info("Service Started");
 	}
-	
+
 	public void stop() throws Exception {
 		if (null == webserver) {
 			throw new IllegalStateException("Cannot stop server, as it has not been started");

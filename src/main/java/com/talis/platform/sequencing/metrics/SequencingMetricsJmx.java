@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,28 +26,28 @@ import javax.management.NotCompliantMBeanException;
 
 import com.talis.jmx.JmxSupport;
 
-public class SequencingMetricsJmx extends JmxSupport 
+public class SequencingMetricsJmx extends JmxSupport
 implements SequencingMetrics, SequencingMetricsJmxMBean {
-	
+
 	private final LatencyMetric writeLatencyMetrics = new LatencyMetric();
 	private final LatencyMetric readLatencyMetrics = new LatencyMetric();
 
 	private final AtomicInteger errorResponses = new AtomicInteger(0);
 	private final AtomicInteger readErrorResponses = new AtomicInteger(0);
-	
+
 	public SequencingMetricsJmx() throws MalformedObjectNameException,
 			InstanceAlreadyExistsException, MBeanRegistrationException,
 			NotCompliantMBeanException, NullPointerException, IOException {
 		super();
 	}
-	
+
 	@Override
 	public String getBeanName() {
 		return "com.talis:name=SequencingMetrics";
 	}
-	
+
 	// Write latency metrics
-	
+
 	@Override
 	public int getWriteSequenceOperations() {
 		return writeLatencyMetrics.getCount();
@@ -57,7 +57,7 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	public long getMinWriteSequenceLatency() {
 		return writeLatencyMetrics.getMinLatency();
 	}
-	
+
 	@Override
 	public long getMaxWriteSequenceLatency() {
 		return writeLatencyMetrics.getMaxLatency();
@@ -72,9 +72,9 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	public void recordSequenceWriteLatency(long latency) {
 		writeLatencyMetrics.recordLatency(latency);
 	}
-	
+
 	// Read latency metrix
-	
+
 	@Override
 	public int getReadSequenceOperations() {
 		return readLatencyMetrics.getCount();
@@ -89,7 +89,7 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	public long getMaxReadSequenceLatency() {
 		return readLatencyMetrics.getMaxLatency();
 	}
-	
+
 	@Override
 	public long getAverageReadSequenceLatency() {
 		return readLatencyMetrics.getAverageLatency();
@@ -99,7 +99,7 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	public void recordSequenceReadLatency(long latency) {
 		readLatencyMetrics.recordLatency(latency);
 	}
-	
+
 	// Error metrics
 
 	@Override
@@ -111,7 +111,7 @@ implements SequencingMetrics, SequencingMetricsJmxMBean {
 	public void incrementReadErrorResponses() {
 		readErrorResponses.incrementAndGet();
 	}
-	
+
 	@Override
 	public int getErrorResponseCount() {
 		int valueToReturn = errorResponses.get();

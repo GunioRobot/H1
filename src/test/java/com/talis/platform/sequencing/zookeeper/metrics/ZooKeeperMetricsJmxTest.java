@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 	public ZooKeeperMetricsJmx getReporter() throws Exception{
 		return new ZooKeeperMetricsJmx();
 	}
-	
+
 	@Test
 	public void incrementKeyCollisions() throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
@@ -38,7 +38,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementKeyCollisions();
 		assertEquals(3, reporter.getKeyCollisions());
 	}
-	
+
 	@Test
 	public void retrievingKeyCollisionsResetsCounts()
 	throws Exception{
@@ -47,14 +47,14 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		assertEquals(1, reporter.getKeyCollisions());
 		assertEquals(0, reporter.getKeyCollisions());
 	}
-	
+
 	@Test
 	public void keyCollisionsCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
 		assertEquals(0, reporter.getKeyCollisions());
 	}
-	
+
 	@Test
 	public void incrementConnectionLossEvents() throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
@@ -64,7 +64,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementConnectionLossEvents();
 		assertEquals(4, reporter.getConnectionLossEvents());
 	}
-	
+
 	@Test
 	public void connectionLossEventsAreASubsetOfKeeperExceptions()
 	throws Exception{
@@ -73,7 +73,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementConnectionLossEvents();
 		assertEquals(1, reporter.getKeeperExceptions());
 	}
-	
+
 	@Test
 	public void retrievingConnectionLostEventsResetsCounts()
 	throws Exception{
@@ -82,7 +82,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		assertEquals(1, reporter.getConnectionLossEvents());
 		assertEquals(0, reporter.getConnectionLossEvents());
 	}
-	
+
 	@Test
 	public void connectionLossEventsCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
@@ -99,7 +99,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementSessionExpiredEvents();
 		assertEquals(4, reporter.getSessionExpiredEvents());
 	}
-	
+
 	@Test
 	public void sessionExpiredEventsAreASubsetOfKeeperExceptions()
 	throws Exception{
@@ -108,7 +108,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementSessionExpiredEvents();
 		assertEquals(1, reporter.getKeeperExceptions());
 	}
-	
+
 	@Test
 	public void retrievingSessionExpiredEventsResetsCounts()
 	throws Exception{
@@ -117,14 +117,14 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		assertEquals(1, reporter.getSessionExpiredEvents());
 		assertEquals(0, reporter.getSessionExpiredEvents());
 	}
-	
+
 	@Test
 	public void sessionExpiredEventCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
 		assertEquals(0, reporter.getSessionExpiredEvents());
 	}
-	
+
 		@Test
 	public void incrementInterruptedExceptions() throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
@@ -134,7 +134,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementInterruptedExceptions();
 		assertEquals(4, reporter.getInterruptedExceptions());
 	}
-	
+
 	@Test
 	public void retrievingInterruptedExceptionsResetsCounts()
 	throws Exception{
@@ -143,14 +143,14 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		assertEquals(1, reporter.getInterruptedExceptions());
 		assertEquals(0, reporter.getInterruptedExceptions());
 	}
-	
+
 	@Test
 	public void interruptedExceptionCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
 		assertEquals(0, reporter.getInterruptedExceptions());
 	}
-	
+
 		@Test
 	public void incrementKeeperExceptions() throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
@@ -160,7 +160,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementKeeperExceptions();
 		assertEquals(4, reporter.getKeeperExceptions());
 	}
-	
+
 	@Test
 	public void retrievingKeeperExceptionsResetsCounts()
 	throws Exception{
@@ -169,14 +169,14 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		assertEquals(1, reporter.getKeeperExceptions());
 		assertEquals(0, reporter.getKeeperExceptions());
 	}
-	
+
 	@Test
 	public void keeperExceptionCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
 		assertEquals(0, reporter.getKeeperExceptions());
 	}
-	
+
 	@Test
 	public void incrementKeyCreations() throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
@@ -186,7 +186,7 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		reporter.incrementKeyCreations();
 		assertEquals(4, reporter.getKeyCreations());
 	}
-	
+
 	@Test
 	public void retrievingKeyCreationsResetsCounts()
 	throws Exception{
@@ -195,12 +195,12 @@ public class ZooKeeperMetricsJmxTest extends AbstractJmxSupportTest {
 		assertEquals(1, reporter.getKeyCreations());
 		assertEquals(0, reporter.getKeyCreations());
 	}
-	
+
 	@Test
 	public void keyCreationCountIsZeroIfNoOperationsRecorded()
 	throws Exception{
 		ZooKeeperMetricsJmx reporter = getReporter();
 		assertEquals(0, reporter.getKeyCreations());
 	}
-	
+
 }

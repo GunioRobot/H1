@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,19 +34,19 @@ import com.google.inject.Provider;
 public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 
 	static final Logger LOG = LoggerFactory.getLogger(ZooKeeperProvider.class);
-	
+
 	public static final String DEFAULT_SERVER_LIST_LOCATION = "/zkservers";
-	public static final String SERVER_LIST_LOCATION_PROPERTY = 
+	public static final String SERVER_LIST_LOCATION_PROPERTY =
 		"com.talis.platform.sequencing.zookeeper.servers";
 
 	public static final int DEFAULT_SESSION_TIMEOUT = 10 * 1000;
-	public static final String SESSION_TIMEOUT_PROPERTY = 
+	public static final String SESSION_TIMEOUT_PROPERTY =
 		"com.talis.platform.sequencing.zookeeper.session.timeout";
 
 	public static final int DEFAULT_CONNECTION_TIMEOUT = 10 * 1000;
-	public static final String CONNECTION_TIMEOUT_PROPERTY = 
+	public static final String CONNECTION_TIMEOUT_PROPERTY =
 		"com.talis.platform.sequencing.zookeeper.connection.timeout";
-	
+
 	private String ensembleList;
 	private volatile ZooKeeper zookeeper;
 	private boolean connected = false;
@@ -113,7 +113,7 @@ public class ZooKeeperProvider implements Provider<ZooKeeper>, Watcher{
 			} catch (InterruptedException e) {
 				LOG.info("Interrupted while waiting for connection");
 			}
-			
+
 			if (!connected) {
 				zookeeper = null;
 				throw new ZooKeeperInitialisationException("Connection timed out or interrupted");

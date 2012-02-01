@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,21 +35,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZkTestHelper {
-	
-	static final Logger LOG = 
+
+	static final Logger LOG =
 		LoggerFactory.getLogger(ZkTestHelper.class);
-	
+
 	public static int CONNECTION_TIMEOUT = 30000;
 	public static String DEFAULT_HOST_PORT = "127.0.0.1:33221";
-	
-	protected Map<String, NIOServerCnxn.Factory> serverFactories = 
+
+	protected Map<String, NIOServerCnxn.Factory> serverFactories =
 		new HashMap<String, NIOServerCnxn.Factory>();
 	public Map<String, File> tmpDirs = new HashMap<String, File>();
-	
+
 //	protected NIOServerCnxn.Factory serverFactory = null;
 //	public File tmpDir;
 	public int maxCnxns = 1;
-	
+
 	public void cleanUp() throws Exception{
 		for (String hostPort : serverFactories.keySet()){
 			stopServer(hostPort);
@@ -58,13 +58,13 @@ public class ZkTestHelper {
 			FileUtils.deleteDirectory(tmpDir);
 		}
 	}
-	
+
     public NIOServerCnxn.Factory createNewServerInstance(File dataDir,
             String hostPort, int maxCnxns)
-        throws IOException, InterruptedException{ 
-    	
+        throws IOException, InterruptedException{
+
     	try{
-    	
+
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
 
 			final int port = getPort(hostPort);
@@ -82,7 +82,7 @@ public class ZkTestHelper {
     		throw e;
     	}
     }
-    
+
     public boolean waitForServerUp(String hp, long timeout) {
         long start = System.currentTimeMillis();
         String split[] = hp.split(":");
@@ -126,7 +126,7 @@ public class ZkTestHelper {
         }
         return false;
     }
-    
+
     public boolean waitForServerDown(String hp, long timeout) {
         long start = System.currentTimeMillis();
         String split[] = hp.split(":");
@@ -161,7 +161,7 @@ public class ZkTestHelper {
     private String getHost(String hostPort) {
         return hostPort.split(":")[0];
     }
-    
+
     private int getPort(String hostPort) {
         String portstr = hostPort.split(":")[1];
         String[] pc = portstr.split("/");
@@ -170,7 +170,7 @@ public class ZkTestHelper {
         }
         return Integer.parseInt(portstr);
     }
-    
+
     public void shutdownServerInstance(NIOServerCnxn.Factory factory,
             String hostPort){
         if (factory != null) {
@@ -182,14 +182,14 @@ public class ZkTestHelper {
                                           CONNECTION_TIMEOUT));
         }
     }
-    
+
     public void startServer(String hostPort) throws Exception {
         LOG.info(String.format("STARTING server %s", hostPort));
         if (serverFactories.containsValue(hostPort)){
         	LOG.info(String.format("SERVER already started %s", hostPort));
         	return;
         }
-        
+
         File dir = tmpDirs.get(hostPort);
         if (null == dir){
         	dir = File.createTempFile("zk_", "_test");
@@ -197,20 +197,20 @@ public class ZkTestHelper {
     		dir.mkdirs();
     		tmpDirs.put(hostPort, dir);
         }
-        
-        NIOServerCnxn.Factory serverFactory = 
+
+        NIOServerCnxn.Factory serverFactory =
         	createNewServerInstance(dir, hostPort, maxCnxns);
         serverFactories.put(hostPort, serverFactory);
         // ensure that only server and data bean are registered
 //        JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }
-    
+
     public void startServer() throws Exception {
 		startServer(DEFAULT_HOST_PORT);
         // ensure that only server and data bean are registered
 //        JMXEnv.ensureOnly("InMemoryDataTree", "StandaloneServer_port");
     }
-    
+
     public void stopServer() throws Exception{
     	stopServer(DEFAULT_HOST_PORT);
     }
@@ -227,5 +227,5 @@ public class ZkTestHelper {
     }
 
 
-	
+
 }

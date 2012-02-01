@@ -40,8 +40,8 @@ class Metadata {
 		ClassLoader classLoader = Metadata.class.getClassLoader();
 		InputStream in = classLoader.getResourceAsStream(PROPERTIES_FILENAME) ;
 		if ( in != null ) {
-			try { 
-				properties.load(in) ; 
+			try {
+				properties.load(in) ;
 			} catch (InvalidPropertiesFormatException e) {
 				LOG.error(PROPERTIES_FILENAME + " is malformed.", e);
 			} catch (IOException e) {

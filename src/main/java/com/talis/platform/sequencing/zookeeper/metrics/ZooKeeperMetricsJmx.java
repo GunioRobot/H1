@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import com.talis.jmx.JmxSupport;
 public class ZooKeeperMetricsJmx extends JmxSupport
 implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 
-	
+
 	public ZooKeeperMetricsJmx() throws MalformedObjectNameException,
 			InstanceAlreadyExistsException, MBeanRegistrationException,
 			NotCompliantMBeanException, NullPointerException, IOException {
@@ -40,20 +40,20 @@ implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 	public String getBeanName() {
 		return "com.talis:name=ZkSequencingMetrics";
 	};
-	
+
 	private final AtomicInteger keyCollisions = new AtomicInteger(0);
 	@Override
 	public void incrementKeyCollisions() {
 		keyCollisions.incrementAndGet();
 	}
-	
+
 	@Override
 	public int getKeyCollisions() {
 		int valueToReturn = keyCollisions.get();
 		keyCollisions.set(0);
 		return valueToReturn;
 	}
-	
+
 	private final AtomicInteger keyCreations = new AtomicInteger(0);
 	@Override
 	public void incrementKeyCreations() {
@@ -101,7 +101,7 @@ implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 	public void incrementInterruptedExceptions() {
 		interruptedExceptions.incrementAndGet();
 	}
-	
+
 	@Override
 	public int getInterruptedExceptions() {
 		int valueToReturn = interruptedExceptions.get();
@@ -114,12 +114,12 @@ implements ZooKeeperMetrics, ZooKeeperMetricsJmxMBean {
 	public void incrementKeeperExceptions() {
 		keeperExceptions.incrementAndGet();
 	}
-	
+
 	@Override
 	public int getKeeperExceptions() {
 		int valueToReturn = keeperExceptions.get();
 		keeperExceptions.set(0);
 		return valueToReturn;
 	}
-	
+
 }

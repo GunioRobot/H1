@@ -1,12 +1,12 @@
 /*
  *    Copyright 2010 Talis Systems Ltd
- * 
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,14 +44,14 @@ public class ZkClock implements Clock {
 			.putLong(-1).array();
 	static final List<ACL> DEFAULT_ACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
 
-	static final String RETRY_DELAY_PROPERTY = 
+	static final String RETRY_DELAY_PROPERTY =
 			"com.talis.platform.sequencing.zookeeper.retrydelay";
-	static final String RETRY_COUNT_PROPERTY = 
+	static final String RETRY_COUNT_PROPERTY =
 			"com.talis.platform.sequencing.zookeeper.retrycount";
 
 	private final ZooKeeper myZooKeeper;
 	private final ZooKeeperMetrics myMetrics;
-	
+
 	private final long retryDelay = Long.getLong(RETRY_DELAY_PROPERTY, 100l);
 	private final int retryCount = Integer.getInteger(RETRY_COUNT_PROPERTY, 10);
 
@@ -89,7 +89,7 @@ public class ZkClock implements Clock {
 			}
 		}
 		throw new SequencingException(String.format(
-				"Failed to obtain next sequence for key %s", key), 
+				"Failed to obtain next sequence for key %s", key),
 				mostRecentException);
 	}
 

@@ -6,25 +6,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class LatencyMetricTest {
-	
+
 	LatencyMetric metric;
-	
+
 	@Before
 	public void setup() {
 		metric = new LatencyMetric();
 	}
-	
+
 	@Test
 	public void testCounterInitialisesAtZero() {
 		assertEquals(0, metric.getCount());
 	}
-	
+
 	@Test
 	public void testCountIncremented() {
 		metric.recordLatency(1);
 		assertEquals(1, metric.getCount());
 	}
-	
+
 	@Test
 	public void testCountIncremented_2() {
 		metric.recordLatency(1);
@@ -94,7 +94,7 @@ public class LatencyMetricTest {
 		metric.recordLatency(4);
 		metric.recordLatency(5);
 		assertEquals(3, metric.getAverageLatency());
-		
+
 	}
 
 }

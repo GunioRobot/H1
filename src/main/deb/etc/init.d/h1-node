@@ -34,7 +34,7 @@ case $1 in
   start
   ;;
 'stop')
-  stop      
+  stop
   ;;
 'restart')
   stop

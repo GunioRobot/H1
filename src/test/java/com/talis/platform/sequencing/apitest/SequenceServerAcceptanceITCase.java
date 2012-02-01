@@ -34,19 +34,19 @@ import com.talis.platform.sequencing.zookeeper.EmbeddedZookeeper;
 import com.talis.platform.sequencing.zookeeper.ZooKeeperProvider;
 
 public class SequenceServerAcceptanceITCase {
-	
+
 	private String key1 = "key1";
 	private String key2 = "key2";
-	
+
 	private int httpPort;
 	private SequenceServer sequenceServer;
 	private HttpClient httpClient = new DefaultHttpClient();
-	
+
 	@Rule
 	public final EmbeddedZookeeper embeddedZookeeper = new EmbeddedZookeeper();
-		
+
 	@Before
-	public void setUp() throws Exception {				
+	public void setUp() throws Exception {
 		System.setProperty(ZooKeeperProvider.SERVER_LIST_LOCATION_PROPERTY, embeddedZookeeper.getZkServersFileLocation());
 		System.setProperty(ZooKeeperProvider.SESSION_TIMEOUT_PROPERTY, "100");
 		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "30000");
@@ -66,19 +66,19 @@ public class SequenceServerAcceptanceITCase {
 			System.clearProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY);
 		}
 	}
-	
+
 	@Test
 	public void getUnknownSequenceReturnsMinusOne() throws Exception {
 		assertGetMissingKeyIsMinusOne("unknownSequence");
-	}	
-	
+	}
+
 	@Test
 	public void getSequenceWhenZookeeperUnavailable() throws Exception {
 		System.setProperty(ZooKeeperProvider.CONNECTION_TIMEOUT_PROPERTY, "100");
 		embeddedZookeeper.stopServer();
 		assertInternalError("anySequence");
 	}
-	
+
 	@Test
 	public void postToUnknownCreatesSequence() throws Exception {
 		String key = "newKey";
@@ -87,7 +87,7 @@ public class SequenceServerAcceptanceITCase {
 		assertEquals(0, newSequence);
 		assertSequenceValue(newSequence, key);
 	}
-	
+
 	@Test
 	public void postIncrementsExistingSequence() throws Exception {
 		String key = "anotherKey";
@@ -97,7 +97,7 @@ public class SequenceServerAcceptanceITCase {
 		assertEquals(2, incrementKey(key));
 		assertSequenceValue(2, key);
 	}
-	
+
 	@Test
 	public void queryKeysWithSingleKey() throws Exception {
 		incrementKeysForQuery();
@@ -105,7 +105,7 @@ public class SequenceServerAcceptanceITCase {
 		HttpGet get = new HttpGet(buildQueryUri(key1));
 		assertQueryKeysWithSingleKeyReturnsSequence(get);
 	}
-	
+
 	@Test
 	public void queryKeysWithSingleKeyByPost() throws Exception {
 		incrementKeysForQuery();
@@ -113,7 +113,7 @@ public class SequenceServerAcceptanceITCase {
 		HttpPost post = buildPostQuery(key1);
 		assertQueryKeysWithSingleKeyReturnsSequence(post);
 	}
-	
+
 	@Test
 	public void queryKeys() throws Exception {
 		incrementKeysForQuery();
@@ -121,7 +121,7 @@ public class SequenceServerAcceptanceITCase {
 		HttpGet get = new HttpGet(buildQueryUri(key1, key2));
 		assertQueryKeysReturnsSequences(get);
 	}
-	
+
 	@Test
 	public void queryKeysByPost() throws Exception {
 		incrementKeysForQuery();
@@ -129,19 +129,19 @@ public class SequenceServerAcceptanceITCase {
 		HttpPost post = buildPostQuery(key1, key2);
 		assertQueryKeysReturnsSequences(post);
 	}
-	
+
 	@Test
 	public void queryKeysWithNoKeys() throws Exception {
 		HttpGet get = new HttpGet(buildQueryUri());
 		assertQueryKeysWithNoKeysErrors(get);
 	}
-	
+
 	@Test
 	public void queryKeysWithNoKeysByPost() throws Exception {
 		HttpPost post = buildPostQuery();
 		assertQueryKeysWithNoKeysErrors(post);
 	}
-	
+
 	@Test
 	public void queryWithMissingKey() throws Exception {
 		// Setup
@@ -151,7 +151,7 @@ public class SequenceServerAcceptanceITCase {
 		HttpGet get = new HttpGet(buildQueryUri(key1, missingKey));
 		assertQueryWithMissingKeyIsNegative(get, missingKey);
 	}
-	
+
 	@Test
 	public void queryWithMissingKeyByPost() throws Exception {
 		// Setup
@@ -199,13 +199,13 @@ public class SequenceServerAcceptanceITCase {
 			EntityUtils.consume(response.getEntity());
 		}
 	}
-	
+
 	private void incrementKeysForQuery() throws Exception {
 		incrementKey(key1);
 		incrementKey(key2);
 		incrementKey(key2);
 	}
-	
+
 	private void assertGetMissingKeyIsMinusOne(String key)
 			throws Exception {
 		HttpGet get = new HttpGet(buildUri("unknownSequence"));
@@ -227,7 +227,7 @@ public class SequenceServerAcceptanceITCase {
 			EntityUtils.consume(response.getEntity());
 		}
 	}
-	
+
 	private void assertInternalError(String key)
 			throws Exception {
 		assertExpectedStatusForGet(HttpStatus.SC_INTERNAL_SERVER_ERROR, key);
@@ -243,7 +243,7 @@ public class SequenceServerAcceptanceITCase {
 		}
 	}
 
-	private void assertSequenceValue(long expectedSequence, String key) 
+	private void assertSequenceValue(long expectedSequence, String key)
 			throws Exception {
 		HttpResponse response = httpGet(key);
 		try {
@@ -253,9 +253,9 @@ public class SequenceServerAcceptanceITCase {
 			assertEquals(expectedSequence, sequence);
 		} finally {
 			EntityUtils.consume(response.getEntity());
-		}		
+		}
 	}
-	
+
 	private long incrementKey(String key)
 			throws Exception {
 		HttpResponse response = httpPost(key);
@@ -266,14 +266,14 @@ public class SequenceServerAcceptanceITCase {
 			EntityUtils.consume(response.getEntity());
 		}
 	}
-	
+
 	private HttpResponse httpGet(String key) throws IOException,
 			ClientProtocolException {
 		HttpGet get = new HttpGet(buildUri(key));
 		HttpResponse response = httpClient.execute(get);
 		return response;
 	}
-	
+
 	private HttpResponse httpPost(String key) throws IOException,
 			ClientProtocolException {
 		HttpPost post = new HttpPost(buildUri(key));
@@ -284,7 +284,7 @@ public class SequenceServerAcceptanceITCase {
 	private String buildUri(String key) {
 		return String.format("http://localhost:%d/seq/%s", httpPort, key);
 	}
-	
+
 	private String buildBaseUri() {
 		return String.format("http://localhost:%d/seq/", httpPort);
 	}
